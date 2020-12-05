@@ -2,10 +2,12 @@
 #include <stdlib.h>
 
 #include <GL/glew.h>
-
+#ifndef OGLH
+#define OGLH
 #include <GLFW/glfw3.h>
-
 #include <glm/glm.hpp>
+#endif
+
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/quaternion.hpp>
 
@@ -42,34 +44,6 @@ vec3 v_right;
 
 quat g_rotation;
 // matrics and input handling
-mat4 get_Mmatrix(){
-	mat4 model = mat4{
-		vec4(1.0f, 0.0f, 0.0f, 0.0f),
-		vec4(0.0f, 1.0f, 0.0f, 0.0f),
-		vec4(0.0f, 0.0f, 1.0f, 0.0f),
-		vec4(0.0f, 0.0f, 0.0f, 1.0f)
-	};
-
-	model *= mat4( // translate
-			vec4(1.0f, 0.0f, 0.0f, 5.0f),
-			vec4(0.0f, 1.0f, 0.0f, 0.0f),
-			vec4(0.0f, 0.0f, 1.0f, 0.0f),
-			vec4(0.0f, 0.0f, 0.0f, 1.0f)
-			);
-
-	model *= mat4( // scale
-		vec4(1.0f, 0.0f, 0.0f, 0.0f),
-		vec4(0.0f, 1.0f, 0.0f, 0.0f),
-		vec4(0.0f, 0.0f, 1.0f, 0.0f),
-		vec4(0.0f, 0.0f, 0.0f, 1.0f)
-	);
-
-	model *= toMat4(g_rotation);
-	//cout << to_string(toMat4(g_rotation)) << endl;
-
-	return model;
-}
-
 mat4 get_Vmatrix(){
 
 	return glm::lookAt(
@@ -495,12 +469,6 @@ int setup(){
 	
 
 	glEnable(GL_CULL_FACE);
-
-	glfwSetCursorPosCallback(window, mouse_move);
-
-	main_loop(window);
-
-	glfwTerminate();
 
 	return 0;
 
