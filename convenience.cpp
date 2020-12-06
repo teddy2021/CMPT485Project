@@ -721,16 +721,6 @@ quat LookAt(vec3 direction, vec3 desiredUp){
 }
 
 
-
-enum types{mat, vec, inte};
-
-struct mesh {
-	vector<vec3> vertices;
-	vector<vec3> normals;
-	vector<vec2> uvs;
-	vector<unsigned short> indices;
-}
-
 class Display_Object{
 		
 	public:
@@ -776,11 +766,11 @@ class Display_Object{
 				return;
 			}
 
-			struct buffers buf;
+			struct mesh m;
 			indexVBO_slow(verts, uvs, normals, 
 					indices,
-				buf.vertices, buf.uvs, buf.normals);
-			buffers = buf;
+				m.vertices, m.uvs, m.normals);
+			Mesh = m
 
 			texture = SOIL_load_OGL_texture(
 					tex_path,
@@ -821,7 +811,6 @@ class Display_Object{
 			return &buffers[0];
 		}
 
-
 		GLuint getTexture(){
 			return texture;
 		}
@@ -835,16 +824,17 @@ class Display_Object{
 		}
 
 		mat4 getModelMatrix(){
-			return translate(mat4(), translation) *
-				scale(mat4(), scale_factor) * 
-			rotate(mat4(), rotation, rotation_axis);
+			mat4 id = mat4(1);
+			return translate(i, translation) *
+				scale(i, scale_factor) * 
+			rotate(i, rotation, rotation_axis);
 		}
 
 		void set_translation(vec3 trans){
 			translation = trans;
 		}
 
-		void set_rotation(vec3 rot, vec3 rot_axis){
+		void set_rotation(int rot, vec3 rot_axis){
 			rotation = rot;
 			rotation_axis = rot_axis;
 		}
@@ -853,18 +843,96 @@ class Display_Object{
 			scale_factor = factor;
 		}
 
-		void SetUniforms(){
-			// TODO: implement shader uniform setting
-		}
-
 	protected:
 
 
 	private:
-		vec3 translation, rotation, rotation_axis, scale_factor;
+		vec3 translation, rotation_axis, scale_factor;
+		int rotation;
 		unsigned short int shader_idx;
-		struct mesh;
+		struct mesh Mesh;
 		GLuint texture;
 		GLuint vbo, uvb, nb, ib;
 		GLuint[] buffers;
+
+		string[] Split(string input, vector<char> delimeters){
+			string arr[2];
+			int i = 0;
+
+			stringstream ssin(input);
+			while(ssin.good() && i < 2){
+				if(find(
+						delimiters.begin(), 
+						delimeters.end(), 
+						ssin) != delimeters.end() ){
+					ssin >> arr[i];
+				}
+				i += 1;
+			}
+
+			return arr;
+		}
+}
+
+
+bool loadModels(const char* path, std::vector<Model>& out_models) {
+	printf("Loading MODELS file %s...\n", path);
+    
+	FILE * file = fopen(path, "r");
+	if( file == NULL ){
+		printf("Impossible to open the file ! Are you in the right path ? See Tutorial 1 for details\n");
+		getchar();
+		return false;
+	}
+    
+    char line[1024];
+    out_models.clear();
+    
+    int numModels = 0;
+    getNextLine(file, line);
+    sscanf(line, "%d", &numModels);
+    out_models.resize(numModels);
+
+
+    
+//    float sx,sy,sz, rx,ry,rz,ra, tx,ty,tz;
+//    float ar,ag,ab, dr,dg,db, sr,sg,sb,ss;
+    char str[1024];
+    for (int i = 0; i < numModels; ++i) {
+        Model m;
+        // read obj file name
+		int shader_idx = 0;
+		getNextLine(file, line);
+		sscanf(line, "%d", &shader_idx);
+		m.shader = shader_idx;
+	
+ 		getNextLine(file, line);
+        sscanf(line, "%s\n", str);
+        m.objFilename.assign(str);
+        
+        // read transformation
+        getNextLine(file, line);
+        sscanf(line, "%f %f %f %f %f %f %f %f %f %f\n",
+               &m.sx, &m.sy, &m.sz,
+               &m.rx, &m.ry, &m.rz, &m.ra,
+               &m.tx, &m.ty, &m.tz );
+
+        // read material
+        getNextLine(file, line);
+        sscanf(line, "%f %f %f %f %f %f %f %f %f %f\n",
+               &m.ar, &m.ag, &m.ab,
+               &m.dr, &m.dg, &m.db,
+               &m.sr, &m.sg, &m.sb, &m.ss );
+
+        getNextLine(file, line);
+        sscanf(line, "%s\n", str);
+        m.materialTag.assign(str);
+        
+        getNextLine(file, line);
+        sscanf(line, "%s\n", str);
+        m.textureFilename.assign(str);
+        
+        out_models[i]=m;
+    }
+	return true;
 }

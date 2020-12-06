@@ -85,3 +85,33 @@ quat RotationBetweenVectors(vec3 start, vec3 dest);
 quat RotateTowards(quat q1, quat q2, float maxAngle);
 quat LookAt(vec3 direction, vec3 desiredUp);
 
+struct Model {
+    // model files
+    std::string objFilename;
+    std::string textureFilename;
+    std::string materialTag;
+    
+	int shader;
+	
+    // model transformation
+    //    float scale[3];
+    //    float axisAngleRot[4];
+    //    float translation[3];
+    float sx,sy,sz, rx,ry,rz,ra, tx,ty,tz;
+    
+    // material properties
+    //    float ambient[3];
+    //    float diffuse[3];
+    //    float specular[3];
+    //    float shininess;
+    float ar,ag,ab, dr,dg,db, sr,sg,sb,ss;
+    
+};
+enum types{mat, v2, v3, v4, inte};
+
+struct mesh {
+	vector<vec3> vertices;
+	vector<vec3> normals;
+	vector<vec2> uvs;
+	vector<unsigned short> indices;
+}
