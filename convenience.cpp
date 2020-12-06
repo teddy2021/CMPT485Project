@@ -721,6 +721,9 @@ quat LookAt(vec3 direction, vec3 desiredUp){
 }
 
 
+
+enum types{mat, vec, inte};
+
 struct mesh {
 	vector<vec3> vertices;
 	vector<vec3> normals;
@@ -823,6 +826,10 @@ class Display_Object{
 			return texture;
 		}
 
+		setShaderIdx(unsigned short int idx){
+			shader_idx = idx;
+		}
+
 		unsigned short int getShaderIdx(){
 			return shader_idx;
 		}
@@ -846,6 +853,9 @@ class Display_Object{
 			scale_factor = factor;
 		}
 
+		void SetUniforms(){
+			// TODO: implement shader uniform setting
+		}
 
 	protected:
 
