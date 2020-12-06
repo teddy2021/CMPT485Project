@@ -17,7 +17,8 @@ int num_shaders;
 GLuint* shaders;
 GLuint VBO;
 GLuint Frame_buffer;
-
+GLuint shadowprogram;
+GLuint* shadowUniforms;
 
 void setup_display(){
 	setup();
@@ -30,9 +31,22 @@ void setup_display(){
 	UVBs = (GLuint*)malloc(0);
 	NBs = (GLuint*)malloc(0);
 
+	shadowprogram = LoadShaders("resources/shaders/shadow.vs",
+										"resources/shaders/shadow.fs");
+	shadowUniforms = (GLuint*)malloc(sizeof(GLuint) * 9);
+	shadowUniforms[0] = glGetUniformLocation(shadowprogram, "MVP");
+	shadowUniforms[1] = glGetUniformLocation(shadowprogram, "View");
+	shadowUniforms[2] = glGetUniformLocation(shadowprogram, "Model");
+	shadowUniforms[3] = glGetUniformLocation(shadowprogram, "w_lightInvDir");
+	shadowUniforms[4] = glGetUniformLocation(shadowprogram, "depthBiasMVP");
+	shadowUniforms[5] = glGetUniformLocation(shadowprogram, "texSampler");
+	shadowUniforms[6] = glGetUniformLocation(shadowprogram, "MV");
+	shadowUniforms[7] = glGetUniformLocation(shadowprogram, "w_LightPos");
+	shadowUniforms[8] = glGetUniformLocation(shadowprogram, "shadowCoord");
 }
 
 void handleShadows(){
+	computeMatrices();
 
 }
 

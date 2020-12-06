@@ -1,8 +1,0 @@
-.*.swp
-CmakeCache.txt
-CmakeFiles
-Libs/reacphysics3d
-Makefile
-cmake_install.cmake
-main
-rp3d_profiling.txt

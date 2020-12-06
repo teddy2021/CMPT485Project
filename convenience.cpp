@@ -721,7 +721,7 @@ quat LookAt(vec3 direction, vec3 desiredUp){
 }
 
 
-struct buffers {
+struct mesh {
 	vector<vec3> vertices;
 	vector<vec3> normals;
 	vector<vec2> uvs;
@@ -731,9 +731,38 @@ struct buffers {
 class Display_Object{
 		
 	public:
-		Display_Object(struct buffers bufs, GLuint tex){
-			buffers = bufs;
+		Display_Object(struct mesh meh, GLuint tex){
+			mesh = meh;
 			texture = tex;
+
+			&buffers = (GLuint*)malloc(sizeof(GLuint) * 4);
+
+			glGenBuffers(1, vb);
+			glGenBuffers(1, nb);
+			glGenBuffers(1, uvb);
+			glGenBuffers(1, ib);
+
+			buffers[0] = vb;
+			buffers[1] = nb;
+			buffers[2] = uvb;
+			buffers[3] = ib;
+
+
+			glBindBuffer(GL_ARRAY_BUFFER, &vb);
+			glBindBuffer(GL_ARRAY_BUFFER, &uv);
+			glBindBuffer(GL_ARRAY_BUFFER, &norm);
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, &idx);
+
+			glBufferData(GL_ARRAY_BUFFER, buffer.vertices.size() * sizeof(vec3), 
+					vb, GL_STATIC_DRAW);
+			glBufferData(GL_ARRAY_BUFFER, buffer.uvs.size() * sizeof(vec2), 
+					uv, GL_STATIC_DRAW);
+			glBufferData(GL_ARRAY_BUFFER, buffer.normals.size() * sizeof(vec3), 
+					norm, GL_STATIC_DRAW);
+			glBufferData(GL_ELEMENT_ARRAY_BUFFER, 
+					buffer.indices.size() * sizeof(unsigned short),
+					idx, GL_STATIC_DRAW);
+
 		}
 
 		Display_Object(const char* object_path, const char* tex_path){
@@ -759,37 +788,36 @@ class Display_Object{
 					SOIL_FLAG_NTSC_SAFE_RGB
 					);
 
-			// TODO: Seperate into a different funciton, or field in the
-			// buffers struct.
-			GLuint* vb = &buffers.vertices;
-			GLuint* norm = &buffers.normals;
-			GLuint* uv = &buffers.uvs;
-			GLuint* idx = &buffers.indices;
-
 			glGenBuffers(1, vb);
-			glGenBuffers(1, norm);
-			glGenBuffers(1, uv);
-			glGenBuffers(1, idx);
+			glGenBuffers(1, nb);
+			glGenBuffers(1, uvb);
+			glGenBuffers(1, ib);
 
-			glBindBuffer(GL_ARRAY_BUFFER, *vb);
-			glBindBuffer(GL_ARRAY_BUFFER, *uv);
-			glBindBuffer(GL_ARRAY_BUFFER, *norm);
-			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, *idx);
+			glBindBuffer(GL_ARRAY_BUFFER, &vb);
+			glBindBuffer(GL_ARRAY_BUFFER, &uv);
+			glBindBuffer(GL_ARRAY_BUFFER, &norm);
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, &idx);
 
-			glBufferData(GL_ARRAY_BUFFER, *vb.size() * sizeof(vec3), 
+			glBufferData(GL_ARRAY_BUFFER, buffer.vertices.size() * sizeof(vec3), 
 					vb, GL_STATIC_DRAW);
-			glBufferData(GL_ARRAY_BUFFER, *uv.size() * sizeof(vec2), 
+			glBufferData(GL_ARRAY_BUFFER, buffer.uvs.size() * sizeof(vec2), 
 					uv, GL_STATIC_DRAW);
-			glBufferData(GL_ARRAY_BUFFER, *norm.size() * sizeof(vec3), 
+			glBufferData(GL_ARRAY_BUFFER, buffer.normals.size() * sizeof(vec3), 
 					norm, GL_STATIC_DRAW);
 			glBufferData(GL_ELEMENT_ARRAY_BUFFER, 
-					*idx.size() * sizeof(unsigned short),
+					buffer.indices.size() * sizeof(unsigned short),
 					idx, GL_STATIC_DRAW);
+
 		}
 
-		struct buffers GetBuffers(){
-			return buffers;
+		struct mesh GetMesh(){
+			return mesh;
 		}
+
+		GLuint* GetBuffers(){
+			return &buffers[0];
+		}
+
 
 		GLuint getTexture(){
 			return texture;
@@ -825,6 +853,8 @@ class Display_Object{
 	private:
 		vec3 translation, rotation, rotation_axis, scale_factor;
 		unsigned short int shader_idx;
-		struct buffers;
+		struct mesh;
 		GLuint texture;
+		GLuint vbo, uvb, nb, ib;
+		GLuint[] buffers;
 }
