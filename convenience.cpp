@@ -1,9 +1,13 @@
 
 #ifndef CON
 #define CON
+#include "convenience.hpp"
+#endif
+
 #include <stdio.h>
 #include <string.h>
 #include <string>
+#include <cstring>
 #include <fstream>
 #include <sstream>
 #include <vector>
@@ -11,9 +15,10 @@
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 #include <iostream>
+#include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtx/quaternion.hpp>
-#endif
+
 
 #ifndef HEADER_SIMPLE_OPENGL_IMAGE_LIBRARY
 #include <SOIL2.h>
@@ -21,6 +26,7 @@
 
 using namespace glm;
 using namespace std;
+using std::vector;
 
 bool ReadFile(const char * file, string& out){
 	
@@ -720,160 +726,147 @@ quat LookAt(vec3 direction, vec3 desiredUp){
 	return rot2 * rot1;
 }
 
+#ifndef DISPLAY_OBJ
+#define DISPLAY_OBJ
+Display_Object::Display_Object( Mesh meh, GLuint tex){
+	mesh = meh;
+	texture = tex;
 
-class Display_Object{
-		
-	public:
-		Display_Object(struct mesh meh, GLuint tex){
-			mesh = meh;
-			texture = tex;
+	buffers = (GLuint*)malloc(sizeof(GLuint) * 4);
 
-			&buffers = (GLuint*)malloc(sizeof(GLuint) * 4);
+	glGenBuffers(1, buffers);
+	glGenBuffers(1, buffers + 1);
+	glGenBuffers(1, buffers + 2);
+	glGenBuffers(1, buffers + 3);
 
-			glGenBuffers(1, vb);
-			glGenBuffers(1, nb);
-			glGenBuffers(1, uvb);
-			glGenBuffers(1, ib);
-
-			buffers[0] = vb;
-			buffers[1] = nb;
-			buffers[2] = uvb;
-			buffers[3] = ib;
+	GLuint *vb = buffers,
+		   *uv = buffers + 1,
+		   *norm = buffers + 2,
+		   *idx = buffers + 3;
 
 
-			glBindBuffer(GL_ARRAY_BUFFER, &vb);
-			glBindBuffer(GL_ARRAY_BUFFER, &uv);
-			glBindBuffer(GL_ARRAY_BUFFER, &norm);
-			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, &idx);
+	glBindBuffer(GL_ARRAY_BUFFER, *vb);
+	glBindBuffer(GL_ARRAY_BUFFER, *uv);
+	glBindBuffer(GL_ARRAY_BUFFER, *norm);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, *idx);
 
-			glBufferData(GL_ARRAY_BUFFER, buffer.vertices.size() * sizeof(vec3), 
-					vb, GL_STATIC_DRAW);
-			glBufferData(GL_ARRAY_BUFFER, buffer.uvs.size() * sizeof(vec2), 
-					uv, GL_STATIC_DRAW);
-			glBufferData(GL_ARRAY_BUFFER, buffer.normals.size() * sizeof(vec3), 
-					norm, GL_STATIC_DRAW);
-			glBufferData(GL_ELEMENT_ARRAY_BUFFER, 
-					buffer.indices.size() * sizeof(unsigned short),
-					idx, GL_STATIC_DRAW);
-
-		}
-
-		Display_Object(const char* object_path, const char* tex_path){
-			vector<vec3> verts, normals;
-			vector<vec2> uvs;
-			if(!loadOBJ(path, verts, uvs, normals)){
-				pfrintf(stderr, "Failed to load %s\n", object_path);
-				return;
-			}
-
-			struct mesh m;
-			indexVBO_slow(verts, uvs, normals, 
-					indices,
-				m.vertices, m.uvs, m.normals);
-			Mesh = m
-
-			texture = SOIL_load_OGL_texture(
-					tex_path,
-					SOIL_LOAD_AUTO,
-					SOIL_CREATE_NEW_ID,
-					SOIL_FLAG_MIPMAPS | 
-					SOIL_FLAG_INVERT_Y | 
-					SOIL_FLAG_NTSC_SAFE_RGB
-					);
-
-			glGenBuffers(1, vb);
-			glGenBuffers(1, nb);
-			glGenBuffers(1, uvb);
-			glGenBuffers(1, ib);
-
-			glBindBuffer(GL_ARRAY_BUFFER, &vb);
-			glBindBuffer(GL_ARRAY_BUFFER, &uv);
-			glBindBuffer(GL_ARRAY_BUFFER, &norm);
-			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, &idx);
-
-			glBufferData(GL_ARRAY_BUFFER, buffer.vertices.size() * sizeof(vec3), 
-					vb, GL_STATIC_DRAW);
-			glBufferData(GL_ARRAY_BUFFER, buffer.uvs.size() * sizeof(vec2), 
-					uv, GL_STATIC_DRAW);
-			glBufferData(GL_ARRAY_BUFFER, buffer.normals.size() * sizeof(vec3), 
-					norm, GL_STATIC_DRAW);
-			glBufferData(GL_ELEMENT_ARRAY_BUFFER, 
-					buffer.indices.size() * sizeof(unsigned short),
-					idx, GL_STATIC_DRAW);
-
-		}
-
-		struct mesh GetMesh(){
-			return mesh;
-		}
-
-		GLuint* GetBuffers(){
-			return &buffers[0];
-		}
-
-		GLuint getTexture(){
-			return texture;
-		}
-
-		setShaderIdx(unsigned short int idx){
-			shader_idx = idx;
-		}
-
-		unsigned short int getShaderIdx(){
-			return shader_idx;
-		}
-
-		mat4 getModelMatrix(){
-			mat4 id = mat4(1);
-			return translate(i, translation) *
-				scale(i, scale_factor) * 
-			rotate(i, rotation, rotation_axis);
-		}
-
-		void set_translation(vec3 trans){
-			translation = trans;
-		}
-
-		void set_rotation(int rot, vec3 rot_axis){
-			rotation = rot;
-			rotation_axis = rot_axis;
-		}
-
-		void set_scale(vec3 factor){
-			scale_factor = factor;
-		}
-
-	protected:
+	glBufferData(GL_ARRAY_BUFFER, Mesh.vertices.size() * sizeof(vec3), 
+			(void*)vb, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, Mesh.uvs.size() * sizeof(vec2), 
+			(void*)uv, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, Mesh.normals.size() * sizeof(vec3), 
+			(void*)norm, GL_STATIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, 
+			Mesh.indices.size() * sizeof(unsigned short),
+			(void*)idx, GL_STATIC_DRAW);
 
 
-	private:
-		vec3 translation, rotation_axis, scale_factor;
-		int rotation;
-		unsigned short int shader_idx;
-		struct mesh Mesh;
-		GLuint texture;
-		GLuint vbo, uvb, nb, ib;
-		GLuint[] buffers;
 
-		string[] Split(string input, vector<char> delimeters){
-			string arr[2];
-			int i = 0;
-
-			stringstream ssin(input);
-			while(ssin.good() && i < 2){
-				if(find(
-						delimiters.begin(), 
-						delimeters.end(), 
-						ssin) != delimeters.end() ){
-					ssin >> arr[i];
-				}
-				i += 1;
-			}
-
-			return arr;
-		}
 }
 
+Display_Object::Display_Object(const char* object_path, const char* tex_path){
+	vector<vec3> verts, normals;
+	vector<vec2> uvs;
+	vector<unsigned short> indices;
+	if(!loadOBJ(object_path, verts, uvs, normals)){
+		fprintf(stderr, "Failed to load %s\n", object_path);
+		return;
+	}
+
+	Mesh m;
+	indexVBO_slow(verts, uvs, normals, 
+			indices,
+		m.vertices, m.uvs, m.normals);
+	Mesh = m;
+
+	texture = SOIL_load_OGL_texture(
+			tex_path,
+			SOIL_LOAD_AUTO,
+			SOIL_CREATE_NEW_ID,
+			SOIL_FLAG_MIPMAPS | 
+			SOIL_FLAG_INVERT_Y | 
+			SOIL_FLAG_NTSC_SAFE_RGB
+			);
+
+	buffers = (GLuint*)malloc(sizeof(GLuint) * 4);
+
+	glGenBuffers(1, buffers);
+	glGenBuffers(1, buffers + 1);
+	glGenBuffers(1, buffers + 2);
+	glGenBuffers(1, buffers + 3);
+
+	GLuint *vb = buffers,
+		   *uv = buffers + 1,
+		   *norm = buffers + 2,
+		   *idx = buffers + 3;
+
+
+	glBindBuffer(GL_ARRAY_BUFFER, *vb);
+	glBindBuffer(GL_ARRAY_BUFFER, *uv);
+	glBindBuffer(GL_ARRAY_BUFFER, *norm);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, *idx);
+
+	glBufferData(GL_ARRAY_BUFFER, Mesh.vertices.size() * sizeof(vec3), 
+			(void*)vb, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, Mesh.uvs.size() * sizeof(vec2), 
+			(void*)uv, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, Mesh.normals.size() * sizeof(vec3), 
+			(void*)norm, GL_STATIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, 
+			Mesh.indices.size() * sizeof(unsigned short),
+			(void*)idx, GL_STATIC_DRAW);
+
+}
+
+Display_Object::Mesh GetMesh(){
+	return mesh;
+}
+
+
+Display_Object::GLuint* GetBuffers(){
+	return buffers;
+}
+
+
+Display_Object::GLuint getTexture(){
+	return texture;
+}
+
+
+Display_Object::void setShaderIdx(unsigned short int idx){
+	shader_idx = idx;
+}
+
+
+Display_Object::unsigned short int getShaderIdx(){
+	return shader_idx;
+}
+
+
+Display_Object::mat4 getModelMatrix(){
+	mat4 id = mat4(1);
+	return translate(id, translation) *
+		scale(id, scale_factor) * 
+	rotate(id, rotation, rotation_axis);
+}
+
+
+Display_Object::void set_translation(vec3 trans){
+	translation = trans;
+}
+
+
+Display_Object::void set_rotation(float rot, vec3 rot_axis){
+	rotation = rot;
+	rotation_axis = rot_axis;
+}
+
+
+Display_Object::void set_scale(vec3 factor){
+	scale_factor = factor;
+}
+
+#endif
 
 bool loadModels(const char* path, std::vector<Model>& out_models) {
 	printf("Loading MODELS file %s...\n", path);
@@ -932,7 +925,26 @@ bool loadModels(const char* path, std::vector<Model>& out_models) {
         sscanf(line, "%s\n", str);
         m.textureFilename.assign(str);
         
-        out_models[i]=m;
+        out_models[i] = m;
     }
 	return true;
+}
+
+bool getNextLine(FILE* file, char* line) {
+    char word[128];
+    while( 1 ) {
+        
+        // grab line
+        fgets(line, 1024, file);
+        // grab first word in line
+        int res = sscanf(line, "%s", word);
+        if (res == EOF) {
+            return false; // EOF found
+        } else if ( strcmp( word, "#" ) == 0 ) {
+            // found comment, ignore and read next line
+            continue;
+		} else {
+            return true;
+        }
+    }
 }

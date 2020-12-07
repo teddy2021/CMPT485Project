@@ -1,15 +1,26 @@
-
 #include <stdlib.h>
 #include <string>
+#include <unordered_map>
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 
+#ifndef HEADER_SIMPLE_OPENGL_IMAGE_LIBRARY
 #include <SOIL2.h>
-#include "convenience.h"
-#include "ogl.hpp"
+#endif
 
+#ifndef CON
+#define CON
+#include "convenience.hpp"
+#endif
+
+#ifndef OGLHPP
+#define OGLHPP
+#include "ogl.hpp"
+#endif
+
+using namespace std;
 using namespace glm;
 
 int width = 1920, height = 1080;
@@ -19,8 +30,8 @@ int num_shaders;
 GLuint* shaders;
 vector<vector<GLuint>> shader_uniforms;
 vector<vector<GLenum>> uniform_types;
-vector<vector<GLchar[]>> uniform_names;
-unordered_map<GLchar[], void*> uniform_values;
+vector<vector<GLchar*>> uniform_names;
+unordered_map<GLchar*, void*> uniform_values;
 
 GLuint VBO;
 
@@ -48,31 +59,31 @@ void setup_display(){
 	depthprogram = LoadShaders("resources/shaders/depth.vs",
 										"resources/shaders/depth.fs");
 	
-	depthUniforms = glGetUniformLocation(depthprogram, "d_MVP");
+	depthUniform = glGetUniformLocation(depthprogram, "d_MVP");
 	
-	lightInvDir = (0.5, 2, 2);
+	lightInvDir = vec3(0.5, 2, 2);
 
 	Frame_buffer = 0;
 	glGenFramebuffers(1, &Frame_buffer);
-	glBindFrameBuffer(GL_FRAMEBUFFER, Frame_buffer);
+	glBindFramebuffer(GL_FRAMEBUFFER, Frame_buffer);
 
 	glGenTextures(1, &depthTexture);
-	glBindTexture(GL_TEXTURE_2D);
-	glTexImage2D(GL_TEXTURE_2D, GL_DEPTH_COMPONENT_16, 1024, 1024, 0,
+	glBindTexture(GL_TEXTURE_2D, depthTexture);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT16, 1024, 1024, 0,
 			GL_DEPTH_COMPONENT, GL_FLOAT, 0);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE-MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, 
 			GL_COMPARE_R_TO_TEXTURE);
 
-	glFrameBufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, depthTexture, 0);
+	glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, depthTexture, 0);
 	glDrawBuffer(GL_NONE);
 
 	if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE){
-		fprintf(stderr, "Failed to complete framebuffer status while making",
+		fprintf(stderr, "Failed to complete framebuffer status while making"
 				" depth buffer.\n");
 	}
 }
@@ -82,34 +93,35 @@ void computeDepthMatrices(){
 	depthView = lookAt(lightInvDir, vec3(0,0,0), vec3(0,1,0));
 	depthModel = mat4(1);
 	depthMVP = depthProjection * depthView * depthModel;
-	depthBiasMVP = make_mat4(
-			[0.5,0,0,0,
-			0,0.5,0,0,
-			0,0,0.5,0,
-			0.5,0.5,0.5,1]) * dpethMVP;
+	depthBiasMVP =  mat4(
+			vec4(0.5,0,0,0),
+			vec4(0,0.5,0,0),
+			vec4(0,0,0.5,0),
+			vec4(0.5,0.5,0.5,1)
+			)* depthMVP;
 
 }
 
 void handleShadows(){
 	computeDepthMatrices();
-	glUniformMatrix4fv(deptUniform, 1, GL_FALSE, &depthMVP[0][0]);
+	glUniformMatrix4fv(depthUniform, 1, GL_FALSE, &depthMVP[0][0]);
 	
 	glUseProgram(depthprogram);
-	glBindFrameBuffer(GL_FRAMEBUFFER, Frame_buffer);
+	glBindFramebuffer(GL_FRAMEBUFFER, Frame_buffer);
 	glViewport(0,0,1024,1024);
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	for(Display_Object obj : objects){
 		GLuint* buffers = obj.GetBuffers();
-		struct mesh = obj.GetMesh();
+		Mesh mesh = obj.GetMesh();
 
 		glEnableVertexAttribArray(0);
-		glBindBuffer(GL_ARRAY_BUFFER, buffers); // pointer to the 0th element 
+		glBindBuffer(GL_ARRAY_BUFFER, *buffers); // pointer to the 0th element 
 		// in the buffer array, so handing it directly is the same as buffers[0]
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
 
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffers + 4);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, *(buffers + 4));
 
 		glDrawElements(GL_TRIANGLES, mesh.indices.size(), GL_UNSIGNED_SHORT, 0);
 		glDisableVertexAttribArray(0);
@@ -117,23 +129,23 @@ void handleShadows(){
 	}
 
 	glBindBuffer(GL_FRAMEBUFFER, 0);
-	glViewPort(0, 0, width, height);
+	glViewport(0, 0, width, height);
 
 }
 
-void setUniform(GLuint uni, GLenum typ, GLchar[] nm){
-	(void*) value = uniform_values.at(nm);
+void setUniform(GLuint uni, GLenum typ, GLchar* nm){
+	void *value = (void*)uniform_values.at(nm);
 	switch (typ){
 
 		// floats
 		case GL_FLOAT:
-			glUniform1f(uni, (float*)value);
+			glUniform1f(uni, *(float*)value);
 			break;
 		case GL_FLOAT_VEC2 :
 			glUniform2fv(uni, 1, (float*)value);
 			break;
 		case GL_FLOAT_VEC3:
-			glUniform3fv(uni, 1, (float*)value)
+			glUniform3fv(uni, 1, (float*)value);
 				break;
 		case GL_FLOAT_VEC4:
 			glUniform4fv(uni, 1, (float*)value);
@@ -141,7 +153,7 @@ void setUniform(GLuint uni, GLenum typ, GLchar[] nm){
 
 		// ints
 		case GL_INT:
-			glUniform1i(uni, (int*)value);
+			glUniform1i(uni, *(int*)value);
 			break;
 		case GL_INT_VEC2:
 			glUniform2iv(uni, 1, (int*)value);
@@ -155,7 +167,7 @@ void setUniform(GLuint uni, GLenum typ, GLchar[] nm){
 
 		// uints
 		case GL_UNSIGNED_INT:
-			glUniform1ui(uni, (unsigned int*)value);
+			glUniform1ui(uni, *(unsigned int*)value);
 			break;
 		case GL_UNSIGNED_INT_VEC2:
 			glUniform2uiv(uni, 1, (unsigned int*)value);
@@ -169,7 +181,7 @@ void setUniform(GLuint uni, GLenum typ, GLchar[] nm){
 
 		// bools
 		case GL_BOOL:
-			glUniform1i(uni, (int*)value);
+			glUniform1i(uni, *(int*)value);
 			break;
 		case GL_BOOL_VEC2:
 			glUniform2iv(uni, 1, (int*)value);
@@ -213,13 +225,13 @@ void setUniform(GLuint uni, GLenum typ, GLchar[] nm){
 			break;
 
 		//double square mats
-		case GL_FLOAT_MAT2:
+		case GL_DOUBLE_MAT2:
 			glUniformMatrix2fv(uni, 1, GL_FALSE, (float*)value);
 			break;
-		case GL_FLOAT_MAT3: 
+		case GL_DOUBLE_MAT3: 
 			glUniformMatrix3fv(uni, 1, GL_FALSE, (float*)value);
 			break;
-		case GL_FLOAT_MAT4:
+		case GL_DOUBLE_MAT4:
 			glUniformMatrix4fv(uni, 1, GL_FALSE, (float*)value);
 			break;
 
@@ -245,35 +257,32 @@ void setUniform(GLuint uni, GLenum typ, GLchar[] nm){
 
 		//samplers
 		case GL_SAMPLER_1D:
-			glUniform1i(uni, value);
+			glUniform1i(uni, *(int*)value);
 			break;
 		case GL_SAMPLER_2D:
-			glUniform1i(uni, value);
+			glUniform1i(uni, *(int*)value);
 			break;
 		case GL_SAMPLER_3D:
-			glUniform1i(uni, value);
+			glUniform1i(uni, *(int*)value);
 			break;
 		case GL_SAMPLER_CUBE:
-			glUniform1i(uni, value);
+			glUniform1i(uni, *(int*)value);
 			break;
 
 
 		//shadow samplers
 		case GL_SAMPLER_1D_SHADOW:
-			glUniform1i(uni, value);
+			glUniform1i(uni, *(int*)value);
 			break;
 		case GL_SAMPLER_2D_SHADOW:
-			glUniform1i(uni, value);
-			break;
-		case GL_SAMPLER_3D_SHADOW:
-			glUniform1i(uni, value);
+			glUniform1i(uni, *(int*)value);
 			break;
 
 			
 		default:
 			fprintf(stderr,
-			"Unknown or unhandled type for uniform %d with name %s\n
-			Type was %u\n", uni, nm, type);
+			"Unknown or unhandled type for uniform %d with name %s\n"
+			"Type was %u\n", uni, nm, typ);
 			return;
 	}
 }
@@ -281,12 +290,12 @@ void setUniform(GLuint uni, GLenum typ, GLchar[] nm){
 void setUniforms(int program){
 	vector<GLuint> uniformset = shader_uniforms.at(program);
 	vector<GLenum> typeset = uniform_types.at(program);
-	vector<GLchar[]> nameset = uniform_names.at(program);
+	vector<GLchar*> nameset = uniform_names.at(program);
 
 	for(int i = 0; i < uniformset.size(); i += 1){
 		GLuint uniform = uniformset.at(i);
 		GLenum type = typeset.at(i);
-		GLchar[] name = nameset.at(i);
+		GLchar* name = nameset.at(i);
 
 	}
 }
@@ -295,17 +304,17 @@ void display(){
 	handleShadows();
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	GLuint* buffers;
-	struct mesh Mesh;
+	Mesh mesh;
 	GLuint texture;
 
 	for(Display_Object obj: objects){
 		buffers = obj.GetBuffers();
-		Mesh = GetMesh();
-		glUseProgram(shaders[obj.getShaderIdx]);
+		mesh = obj.GetMesh();
+		glUseProgram(shaders[obj.getShaderIdx()]);
 
-		glActivateTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, obj.GetTexture);
-		glActivateTexture(GL_TEXTURE1);
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, obj.getTexture());
+		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, depthTexture);
 
 		setUniforms(obj.getShaderIdx());
@@ -314,16 +323,16 @@ void display(){
 		glEnableVertexAttribArray(1);
 		glEnableVertexAttribArray(2);
 
-		glBindBuffer(GL_ARRAY_BUFFER, buffers);
-		glBindBuffer(GL_ARRAY_BUFFER, buffers + 1);
-		glBindBuffer(GL_ARRAY_BUFFER, buffers + 2);
-		glBindBuffer(GL_ELEMENTS_ARRAY_BUFFER, buffers + 3);
+		glBindBuffer(GL_ARRAY_BUFFER, *buffers);
+		glBindBuffer(GL_ARRAY_BUFFER, *(buffers + 1));
+		glBindBuffer(GL_ARRAY_BUFFER, *(buffers + 2));
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, *(buffers + 3));
 		
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
 		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, 0);
 		glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, 0);
 
-		glDrawElements(GL_ELEMENT_ARRAY_BUFFER, Mesh.indices.size(), 
+		glDrawElements(GL_ELEMENT_ARRAY_BUFFER, mesh.indices.size(), 
 				GL_UNSIGNED_SHORT, 0);
 
 		glDisableVertexAttribArray(0);
@@ -335,14 +344,18 @@ void display(){
 void AssociateShader(int shader_idx, int object_idx){
 	Display_Object obj = objects.at(object_idx);
 
-	obj.SetShaderIDx(shader_idx);
+	obj.setShaderIdx(shader_idx);
 }
 
+void AssosciateUniform(GLchar *name, void *value){
+	std::pair<GLchar *, void *> element(name, value);
+	uniform_values.insert(element);
+}
 
 void GetUniformSet(int program, 
-		vector<GLuint>& uniforms
+		vector<GLuint>& uniforms,
 		vector<GLenum>& typeset,
-		vector<GLchar[]>& nameset){
+		vector<GLchar*>& nameset){
 	GLint i, count, size;
 	GLenum type;
 	
@@ -352,9 +365,9 @@ void GetUniformSet(int program,
 	glGetProgramiv(program, GL_ACTIVE_ATTRIBUTES, &count);
 
 	vector<GLuint> unifs;
-	vector<GLenum> types
+	vector<GLenum> types;
 	for(i = 0; i < count; i += 1){
-		glGetActiveUniform(shaders[i], (GLuint)i, bufSize, 
+		glGetActiveUniform(shaders[i], (GLuint)i, bufsize, 
 				&length, &size, &type, name);
 		uniforms.push_back(i);
 		typeset.push_back(type);
@@ -367,23 +380,25 @@ void addShader(string name){
 		shaders = (GLuint *)malloc(sizeof(GLuint));
 	}
 	else{
-		shaders = (GLuint*)realloc(shaders,sizeof(GLuint) num_shaders + 1);
+		shaders = (GLuint*)realloc(shaders,sizeof(GLuint) * num_shaders + 1);
 	}
 	num_shaders += 1;
 	string vs, fs;
 	vs = "resources/shaders/" + name + ".vs";
-	fs = "resources/shaders/" + name + ".fs"
-	shaders[num_shaders - 1] = LoadShaders(vs, fs);
+	fs = "resources/shaders/" + name + ".fs";
+	const char* vss = vs.c_str();
+	const char* fss = fs.c_str();
+	shaders[num_shaders - 1] = LoadShaders(vss, fss);
 
 	vector<GLuint> program_uniforms;
 	vector<GLenum> types;
-	vector<GLchar[]> names;
+	vector<GLchar*> names;
 	
 	GetUniformSet(num_shaders-1, program_uniforms, types, names);
 	
-	shader_uniforms.at(num_shaders-1).push_back(program_uniforms);
-	uniform_types.at(num_shaders-1).push_back(types);
-	uniform_names.at(num_shaders-1).push_back(names);
+	shader_uniforms.push_back(program_uniforms);
+	uniform_types.push_back(types);
+	uniform_names.push_back(names);
 }
 
 void add_display_object(Display_Object obj){
@@ -394,7 +409,7 @@ void add_object_path(const char* obj_path){
 	vector<Model> models;
 	char location[1024];
 	sprintf(location, "resources/%s/%s.models", 
-			obj_path.c_str(), obj_path.c_str());
+			obj_path, obj_path);
 	if(loadModels(location, models) != true){
 		fprintf(stderr, "Failed to load from %s models file\n", obj_path);
 		return;
@@ -417,8 +432,8 @@ void add_object_path(const char* obj_path){
 
 }
 
-void add_object_buffer(struct buffers obj_buffers, GLuint texture){
-	objects.push_back(Display_Object(obj_buffers, texture));
+void add_object_buffer(Mesh mesh, GLuint texture){
+	objects.push_back(Display_Object(mesh, texture));
 }
 
 

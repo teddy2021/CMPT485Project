@@ -1,5 +1,7 @@
 #ifndef CON
 #define CON
+#endif
+
 #include <stdio.h>
 #include <string.h>
 #include <string>
@@ -11,10 +13,10 @@
 #include <glm/glm.hpp>
 #include <iostream>
 #include <glm/gtc/quaternion.hpp>
-#endif
 
 using namespace glm;
 using namespace std;
+using std::vector;
 
 bool ReadFile(const char* file, string& out);
 
@@ -90,7 +92,7 @@ struct Model {
     std::string objFilename;
     std::string textureFilename;
     std::string materialTag;
-    
+	
 	int shader;
 	
     // model transformation
@@ -107,11 +109,55 @@ struct Model {
     float ar,ag,ab, dr,dg,db, sr,sg,sb,ss;
     
 };
-enum types{mat, v2, v3, v4, inte};
 
-struct mesh {
+struct Mesh {
 	vector<vec3> vertices;
 	vector<vec3> normals;
 	vector<vec2> uvs;
 	vector<unsigned short> indices;
-}
+};
+
+#ifndef DISPLAY_OBJ
+#define DISPLAY_OBJ
+class Display_Object{
+		
+	public:
+		Display_Object(Mesh meh, GLuint tex);
+
+		Display_Object(const char* object_path, const char* tex_path);
+
+		Mesh GetMesh();
+
+		GLuint* GetBuffers();
+
+		GLuint getTexture();
+
+		void setShaderIdx(unsigned short int idx);
+
+		unsigned short int getShaderIdx();
+			
+		mat4 getModelMatrix();
+				
+		void set_translation(vec3 trans);
+
+		void set_rotation(float rot, vec3 rot_axis);
+
+		void set_scale(vec3 factor);
+	protected:
+
+
+	private:
+		vec3 translation, rotation_axis, scale_factor;
+		float rotation;
+		unsigned short int shader_idx;
+		Mesh mesh;
+		GLuint texture;
+		GLuint vbo, uvb, nb, ib;
+		GLuint *buffers;
+
+};
+#endif
+
+bool loadModels(const char* path, std::vector<Model>& out_models);
+
+bool getNextLine(FILE* file, char* line);

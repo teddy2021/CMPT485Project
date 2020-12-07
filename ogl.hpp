@@ -1,5 +1,5 @@
-#ifndef OGLH
-#define OGLH
+#ifndef OGLHPP
+#define OGLHPP
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 using namespace glm;

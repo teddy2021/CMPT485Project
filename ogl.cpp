@@ -2,8 +2,8 @@
 #include <stdlib.h>
 
 #include <GL/glew.h>
-#ifndef OGLH
-#define OGLH
+#ifndef OGLHPP
+#define OGLHPP
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 #endif
@@ -12,9 +12,14 @@
 #include <glm/gtx/quaternion.hpp>
 
 #include <string>
+#ifndef CON
+#define CON
 #include "convenience.hpp"
+#endif
 
+#ifndef HEADER_SIMPLE_OPENGL_IMAGE_LIBRARY
 #include <SOIL2.h>
+#endif
 #include <algorithm>
 #include <unistd.h>
 
@@ -25,11 +30,14 @@
 using namespace std;
 using namespace glm;
 
+
 // Globals
 float FOV = 30;
 
-float width = 1024;
-float height = 768;
+
+extern float width;
+extern float height;
+
 
 double mouse_x, mouse_y;
 double horizontalAngle = 3.14;
@@ -43,6 +51,7 @@ vec3 direction;
 vec3 v_right;
 
 quat g_rotation;
+
 // matrics and input handling
 mat4 get_Vmatrix(){
 
@@ -102,11 +111,10 @@ mat4 gen_MVPmatrix(GLFWwindow * window){
 		position -= up * deltaTime * speed;
 	}
 
-	mat4 model = get_Mmatrix();
 	mat4 view = get_Vmatrix();
 	mat4 projection = get_Pmatrix();
 	
-	return projection * view * model;
+	return projection * view;
 }
 
 void mouse_move(GLFWwindow* window, double xpos, double ypos){
@@ -474,6 +482,4 @@ int setup(){
 
 }
 
-int main(){
-	return setup();
-}
+

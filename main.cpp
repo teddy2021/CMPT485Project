@@ -7,9 +7,14 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
+#ifndef CON
+#define CON
 #include "convenience.hpp"
+#endif
 
+#ifndef HEADER_SIMPLE_OPENGL_IMAGE_LIBRARY
 #include <SOIL2.h>
+#endif
 
 using namespace std;
 using namespace glm;
