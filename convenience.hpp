@@ -132,9 +132,9 @@ class Display_Object{
 
 		GLuint getTexture();
 
-		void setShaderIdx(unsigned short int idx);
+		void setShaderIdx(int idx);
 
-		unsigned short int getShaderIdx();
+		int getShaderIdx();
 			
 		mat4 getModelMatrix();
 				
@@ -149,8 +149,8 @@ class Display_Object{
 	private:
 		vec3 translation, rotation_axis, scale_factor;
 		float rotation;
-		unsigned short int shader_idx;
-		Mesh mesh;
+		int shader_idx;
+		Mesh *mesh;
 		GLuint texture;
 		GLuint vbo, uvb, nb, ib;
 		GLuint *buffers;

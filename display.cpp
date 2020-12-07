@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <stdio.h>
 #include <string>
 #include <unordered_map>
 
@@ -8,6 +9,11 @@
 
 #ifndef HEADER_SIMPLE_OPENGL_IMAGE_LIBRARY
 #include <SOIL2.h>
+#endif
+
+#ifndef DISPLAY
+#define DISPLAY
+#include "display.hpp"
 #endif
 
 #ifndef CON
@@ -23,14 +29,15 @@
 using namespace std;
 using namespace glm;
 
-int width = 1920, height = 1080;
+float width = 1920, height = 1080;
 
-vector<Display_Object> objects;
+Display_Object* objects;
+int n_objects = 0;
 int num_shaders;
 GLuint* shaders;
-vector<vector<GLuint>> shader_uniforms;
-vector<vector<GLenum>> uniform_types;
-vector<vector<GLchar*>> uniform_names;
+vector<GLuint*> shader_uniforms;
+vector<GLenum*> uniform_types;
+vector<GLchar**> uniform_names;
 unordered_map<GLchar*, void*> uniform_values;
 
 GLuint VBO;
@@ -47,8 +54,8 @@ vec3 lightInvDir;
 mat4 depthProjection, depthView, depthModel, depthMVP;
 mat4 depthBiasMVP;
 
-void setup_display(){
-	setup();
+GLFWwindow * setup_display(){
+	GLFWwindow * window = setup();
 	num_shaders = 0;
 	
 	glGenVertexArrays(1, &VBO);
@@ -56,10 +63,9 @@ void setup_display(){
 
 	// Depth shader relevant details
 	// The depth shader is used to create realtime shadows
-	depthprogram = LoadShaders("resources/shaders/depth.vs",
-										"resources/shaders/depth.fs");
-	
-	depthUniform = glGetUniformLocation(depthprogram, "d_MVP");
+	depthprogram = addShader("Depth");
+
+	depthUniform = shader_uniforms.at(0)[1];
 	
 	lightInvDir = vec3(0.5, 2, 2);
 
@@ -86,6 +92,8 @@ void setup_display(){
 		fprintf(stderr, "Failed to complete framebuffer status while making"
 				" depth buffer.\n");
 	}
+
+	return window;
 }
 
 void computeDepthMatrices(){
@@ -112,16 +120,17 @@ void handleShadows(){
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	for(Display_Object obj : objects){
+	for(int i = 0; i < n_objects; i += 1){
+		Display_Object obj = objects[i];
 		GLuint* buffers = obj.GetBuffers();
 		Mesh mesh = obj.GetMesh();
 
 		glEnableVertexAttribArray(0);
-		glBindBuffer(GL_ARRAY_BUFFER, *buffers); // pointer to the 0th element 
+		glBindBuffer(GL_ARRAY_BUFFER, buffers[0]); // pointer to the 0th element 
 		// in the buffer array, so handing it directly is the same as buffers[0]
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
 
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, *(buffers + 4));
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffers[4]);
 
 		glDrawElements(GL_TRIANGLES, mesh.indices.size(), GL_UNSIGNED_SHORT, 0);
 		glDisableVertexAttribArray(0);
@@ -288,14 +297,14 @@ void setUniform(GLuint uni, GLenum typ, GLchar* nm){
 }
 
 void setUniforms(int program){
-	vector<GLuint> uniformset = shader_uniforms.at(program);
-	vector<GLenum> typeset = uniform_types.at(program);
-	vector<GLchar*> nameset = uniform_names.at(program);
+	GLuint * uniformset = shader_uniforms.at(program);
+	GLenum * typeset = uniform_types.at(program);
+	GLchar** nameset = uniform_names.at(program);
 
-	for(int i = 0; i < uniformset.size(); i += 1){
-		GLuint uniform = uniformset.at(i);
-		GLenum type = typeset.at(i);
-		GLchar* name = nameset.at(i);
+	for(int i = 1; i < uniformset[0]; i += 1){
+		GLuint uniform = uniformset[i];
+		GLenum type = typeset[i-1];
+		GLchar* name = nameset[i-1];
 
 	}
 }
@@ -307,7 +316,8 @@ void display(){
 	Mesh mesh;
 	GLuint texture;
 
-	for(Display_Object obj: objects){
+	for(int i = 0; i < n_objects; i += 1){
+		Display_Object obj = objects[i];
 		buffers = obj.GetBuffers();
 		mesh = obj.GetMesh();
 		glUseProgram(shaders[obj.getShaderIdx()]);
@@ -317,20 +327,26 @@ void display(){
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, depthTexture);
 
-		setUniforms(obj.getShaderIdx());
-
+	
 		glEnableVertexAttribArray(0);
-		glEnableVertexAttribArray(1);
-		glEnableVertexAttribArray(2);
-
 		glBindBuffer(GL_ARRAY_BUFFER, *buffers);
+
+		glEnableVertexAttribArray(1);
 		glBindBuffer(GL_ARRAY_BUFFER, *(buffers + 1));
-		glBindBuffer(GL_ARRAY_BUFFER, *(buffers + 2));
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, *(buffers + 3));
+	
 		
+		glEnableVertexAttribArray(2);
+		glBindBuffer(GL_ARRAY_BUFFER, *(buffers + 2));
+
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
 		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, 0);
 		glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, 0);
+		
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, *(buffers + 3));
+		
+
+		setUniforms(obj.getShaderIdx());
+
 
 		glDrawElements(GL_ELEMENT_ARRAY_BUFFER, mesh.indices.size(), 
 				GL_UNSIGNED_SHORT, 0);
@@ -342,40 +358,56 @@ void display(){
 }
 
 void AssociateShader(int shader_idx, int object_idx){
-	Display_Object obj = objects.at(object_idx);
 
-	obj.setShaderIdx(shader_idx);
+	objects[object_idx].setShaderIdx(shader_idx);
 }
 
-void AssosciateUniform(GLchar *name, void *value){
+void AssociateUniform(GLchar *name, void *value){
 	std::pair<GLchar *, void *> element(name, value);
 	uniform_values.insert(element);
 }
 
 void GetUniformSet(int program, 
-		vector<GLuint>& uniforms,
-		vector<GLenum>& typeset,
-		vector<GLchar*>& nameset){
-	GLint i, count, size;
+		GLuint* &uniforms,
+		GLenum* &typeset,
+		GLchar** &nameset){
+	GLint count, size;
 	GLenum type;
-	
+	GLuint i;
+
 	const GLsizei bufsize = 16;
 	GLchar name[bufsize];
 	GLsizei length;
-	glGetProgramiv(program, GL_ACTIVE_ATTRIBUTES, &count);
+	glGetProgramiv(shaders[program], GL_ACTIVE_ATTRIBUTES, &count);
+
+ 	*uniforms = count;
+
+	uniforms = (GLuint*)realloc(uniforms, count + 1);
+	typeset = (GLenum*)realloc(typeset, count);
+	nameset = (GLchar**)realloc(nameset, count);
+	
 
 	vector<GLuint> unifs;
 	vector<GLenum> types;
+	printf("[-1.%d] getting uniforms for shader %d\n", program, program);
 	for(i = 0; i < count; i += 1){
-		glGetActiveUniform(shaders[i], (GLuint)i, bufsize, 
+
+		printf("[%d.0] getting shader variable for shader %d and index %d\n", i, program,  i);
+		glGetActiveUniform(shaders[program], i, bufsize, 
 				&length, &size, &type, name);
-		uniforms.push_back(i);
-		typeset.push_back(type);
-		nameset.push_back(name);
+
+		printf("[%d.1] storing uniform index\n", i);
+		memcpy((uniforms + i), &i, sizeof(GLuint));
+		printf("[%d.2] copying type (%u) out\n", i, type);
+		memcpy(typeset, &type, sizeof(type));
+		printf("[%d.3] allocating space of size %d for char\n", i , length);
+		nameset[i] = (GLchar*)malloc(sizeof(GLchar) * length);
+		printf("[%d.4] copying %s out to char array\n", i, name);
+		memcpy(&nameset[i], name, length);
 	}
 }
 
-void addShader(string name){
+int addShader(string name){
 	if(num_shaders == 0){
 		shaders = (GLuint *)malloc(sizeof(GLuint));
 	}
@@ -388,52 +420,88 @@ void addShader(string name){
 	fs = "resources/shaders/" + name + ".fs";
 	const char* vss = vs.c_str();
 	const char* fss = fs.c_str();
-	shaders[num_shaders - 1] = LoadShaders(vss, fss);
+	if((shaders[num_shaders - 1] = LoadShaders(vss, fss)) == -1){
+		fprintf(stderr, "Failed to load shader program for shader pair %s\n", 
+				name.c_str());
+		return -1;
+	}
 
-	vector<GLuint> program_uniforms;
-	vector<GLenum> types;
-	vector<GLchar*> names;
+	GLuint *program_uniforms = (GLuint*) malloc(sizeof(GLuint));
+	GLenum * types = (GLenum*)  malloc(0);
+	GLchar** names = (GLchar**)  malloc(0);
 	
-	GetUniformSet(num_shaders-1, program_uniforms, types, names);
+	GetUniformSet(num_shaders - 1, program_uniforms, types, names);
 	
 	shader_uniforms.push_back(program_uniforms);
 	uniform_types.push_back(types);
 	uniform_names.push_back(names);
+
+	return num_shaders-1;
 }
 
-void add_display_object(Display_Object obj){
-	objects.push_back(obj);
+int add_display_object(Display_Object obj){
+	if(n_objects == 0){
+		objects = (Display_Object*)malloc(sizeof(Display_Object));
+	}
+	else{
+		objects = (Display_Object*)realloc(objects, n_objects);
+	}
+	n_objects += 1;
+	memcpy(&objects[n_objects-1], &obj, sizeof(obj));
+	return n_objects-1;
 }
 
-void add_object_path(const char* obj_path){
+int add_object_path(const char* obj_path){
 	vector<Model> models;
 	char location[1024];
 	sprintf(location, "resources/%s/%s.models", 
 			obj_path, obj_path);
 	if(loadModels(location, models) != true){
 		fprintf(stderr, "Failed to load from %s models file\n", obj_path);
-		return;
+		return - 1;
+	}	
+	if(n_objects == 0){
+		objects = (Display_Object*)malloc(sizeof(Display_Object) * models.size());
 	}
-
-
-
+	else{
+		objects = (Display_Object*)realloc(objects, n_objects + models.size());
+	}	
+	n_objects += models.size();
+	
 	for(Model m : models){
-		Display_Object obj(m.objFilename.c_str(), m.textureFilename.c_str());
+		char object_place[1024];
+		sprintf(object_place, "resources/%s/%s", obj_path, m.objFilename.c_str());
+
+		char object_tex_place[1024];
+		sprintf(object_tex_place, "resources/%s/%s", obj_path, m.textureFilename.c_str());
+		Display_Object obj(object_place, object_tex_place);
 
 		vec3 scaler = vec3(m.sx, m.sy, m.sz);
 		vec3 translation = vec3(m.tx, m.ty, m.tz);
 		vec3 rotation_axis = vec3(m.rx, m.ry, m.rz);
+		
 		obj.set_scale(scaler);
 		obj.set_translation(translation);
 		obj.set_rotation(m.ra, rotation_axis);
-	
 
+		memcpy(&objects[n_objects - 1], &obj, sizeof(obj));
 	}
+
+	return n_objects -1;
 
 }
 
-void add_object_buffer(Mesh mesh, GLuint texture){
-	objects.push_back(Display_Object(mesh, texture));
+int add_object_buffer(Mesh mesh, GLuint texture){
+	if(n_objects == 0){
+		objects = (Display_Object*)malloc(sizeof(Display_Object));
+	}
+	else{
+		objects = (Display_Object*)realloc(objects, n_objects);
+	}
+	n_objects += 1;
+	Display_Object obj(mesh, texture);
+	memcpy(&objects[n_objects - 1], &obj, sizeof(obj));
+	return n_objects - 1;
 }
 
 

@@ -726,14 +726,15 @@ quat LookAt(vec3 direction, vec3 desiredUp){
 	return rot2 * rot1;
 }
 
-#ifndef DISPLAY_OBJ
-#define DISPLAY_OBJ
+#ifdef DISPLAY_OBJ
 Display_Object::Display_Object( Mesh meh, GLuint tex){
-	mesh = meh;
+
+	mesh = (Mesh*)malloc(sizeof(Mesh));
+	memcpy(mesh, &meh, sizeof(Mesh));
 	texture = tex;
 
 	buffers = (GLuint*)malloc(sizeof(GLuint) * 4);
-
+	
 	glGenBuffers(1, buffers);
 	glGenBuffers(1, buffers + 1);
 	glGenBuffers(1, buffers + 2);
@@ -750,14 +751,14 @@ Display_Object::Display_Object( Mesh meh, GLuint tex){
 	glBindBuffer(GL_ARRAY_BUFFER, *norm);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, *idx);
 
-	glBufferData(GL_ARRAY_BUFFER, Mesh.vertices.size() * sizeof(vec3), 
+	glBufferData(GL_ARRAY_BUFFER, mesh->vertices.size() * sizeof(vec3), 
 			(void*)vb, GL_STATIC_DRAW);
-	glBufferData(GL_ARRAY_BUFFER, Mesh.uvs.size() * sizeof(vec2), 
+	glBufferData(GL_ARRAY_BUFFER, mesh->uvs.size() * sizeof(vec2), 
 			(void*)uv, GL_STATIC_DRAW);
-	glBufferData(GL_ARRAY_BUFFER, Mesh.normals.size() * sizeof(vec3), 
+	glBufferData(GL_ARRAY_BUFFER, mesh->normals.size() * sizeof(vec3), 
 			(void*)norm, GL_STATIC_DRAW);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, 
-			Mesh.indices.size() * sizeof(unsigned short),
+			mesh->indices.size() * sizeof(unsigned short),
 			(void*)idx, GL_STATIC_DRAW);
 
 
@@ -774,10 +775,12 @@ Display_Object::Display_Object(const char* object_path, const char* tex_path){
 	}
 
 	Mesh m;
+	
 	indexVBO_slow(verts, uvs, normals, 
 			indices,
 		m.vertices, m.uvs, m.normals);
-	Mesh = m;
+	mesh = (Mesh*)malloc(sizeof(Mesh));
+	memcpy(mesh, &m, sizeof(Mesh));
 
 	texture = SOIL_load_OGL_texture(
 			tex_path,
@@ -806,44 +809,44 @@ Display_Object::Display_Object(const char* object_path, const char* tex_path){
 	glBindBuffer(GL_ARRAY_BUFFER, *norm);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, *idx);
 
-	glBufferData(GL_ARRAY_BUFFER, Mesh.vertices.size() * sizeof(vec3), 
+	glBufferData(GL_ARRAY_BUFFER, mesh->vertices.size() * sizeof(vec3), 
 			(void*)vb, GL_STATIC_DRAW);
-	glBufferData(GL_ARRAY_BUFFER, Mesh.uvs.size() * sizeof(vec2), 
+	glBufferData(GL_ARRAY_BUFFER, mesh->uvs.size() * sizeof(vec2), 
 			(void*)uv, GL_STATIC_DRAW);
-	glBufferData(GL_ARRAY_BUFFER, Mesh.normals.size() * sizeof(vec3), 
+	glBufferData(GL_ARRAY_BUFFER, mesh->normals.size() * sizeof(vec3), 
 			(void*)norm, GL_STATIC_DRAW);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, 
-			Mesh.indices.size() * sizeof(unsigned short),
+			mesh->indices.size() * sizeof(unsigned short),
 			(void*)idx, GL_STATIC_DRAW);
 
 }
 
-Display_Object::Mesh GetMesh(){
-	return mesh;
+Mesh Display_Object:: GetMesh(){
+	return *mesh;
 }
 
 
-Display_Object::GLuint* GetBuffers(){
+GLuint * Display_Object:: GetBuffers(){
 	return buffers;
 }
 
 
-Display_Object::GLuint getTexture(){
+GLuint Display_Object:: getTexture(){
 	return texture;
 }
 
 
-Display_Object::void setShaderIdx(unsigned short int idx){
+void Display_Object:: setShaderIdx(int idx){
 	shader_idx = idx;
 }
 
 
-Display_Object::unsigned short int getShaderIdx(){
+int Display_Object:: getShaderIdx(){
 	return shader_idx;
 }
 
 
-Display_Object::mat4 getModelMatrix(){
+mat4 Display_Object:: getModelMatrix(){
 	mat4 id = mat4(1);
 	return translate(id, translation) *
 		scale(id, scale_factor) * 
@@ -851,18 +854,18 @@ Display_Object::mat4 getModelMatrix(){
 }
 
 
-Display_Object::void set_translation(vec3 trans){
+void Display_Object:: set_translation(vec3 trans){
 	translation = trans;
 }
 
 
-Display_Object::void set_rotation(float rot, vec3 rot_axis){
+void Display_Object:: set_rotation(float rot, vec3 rot_axis){
 	rotation = rot;
 	rotation_axis = rot_axis;
 }
 
 
-Display_Object::void set_scale(vec3 factor){
+void Display_Object:: set_scale(vec3 factor){
 	scale_factor = factor;
 }
 

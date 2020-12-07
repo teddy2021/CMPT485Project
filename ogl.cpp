@@ -437,11 +437,11 @@ void main_loop(GLFWwindow * window){
 	glfwTerminate();
 }
 
-int setup(){
+GLFWwindow * setup(){
 
 	if(!glfwInit()){
 		fprintf( stderr, "Failed to initialize GLFW\n" );
-		return -1;
+		return (GLFWwindow *)-1;
 	}
 
 	// Set values for opengl
@@ -457,14 +457,14 @@ int setup(){
 	if(NULL == window){
 		fprintf(stderr, "Failed to open GLFW window. If you have an Intel GPU, they are not 3.3 compatible. Try the 2.1 version of the tutorials.\n" );
 		glfwTerminate();
-		return -1;
+		return (GLFWwindow *)-1;
 	}
 	glfwMakeContextCurrent(window);
 
 	glewExperimental = true;
 	if(glewInit() != GLEW_OK){
 		fprintf(stderr, "Failed to init GLEW\n");
-		return -1;
+		return (GLFWwindow *)-1;
 	}
 
 	glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
@@ -478,7 +478,7 @@ int setup(){
 
 	glEnable(GL_CULL_FACE);
 
-	return 0;
+	return window;
 
 }
 

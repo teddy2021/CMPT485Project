@@ -12,6 +12,8 @@
 #include "convenience.hpp"
 #endif
 
+#include "display.hpp"
+
 #ifndef HEADER_SIMPLE_OPENGL_IMAGE_LIBRARY
 #include <SOIL2.h>
 #endif
@@ -21,7 +23,7 @@ using namespace glm;
 using namespace reactphysics3d;
 
 int main(){
-	printf("Hello!");
+	printf("Hello!\n");
 	PhysicsCommon common;
 	PhysicsWorld* world = common.createPhysicsWorld();
 
@@ -31,6 +33,7 @@ int main(){
 	RigidBody* body = world->createRigidBody(transform);
 
 	const decimal timestep = 1.0f/60.0f;
+	
 
 	for(int i = 0; i < 20; i +=1){
 		world->update(timestep);
@@ -45,6 +48,19 @@ int main(){
 
 	}
 
+	GLFWwindow * window = setup_display();
+
+	int object = add_object_path("heating_plant");
+	int shader = addShader("shadow");
+	AssociateShader(shader, object);
+
+	do{
 		
+		display();
+		
+	}while( glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS &&
+		 glfwWindowShouldClose(window) == 0 );
+
+	glfwTerminate();
 	return 0;
 }
