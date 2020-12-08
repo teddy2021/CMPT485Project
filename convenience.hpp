@@ -7,6 +7,11 @@
 #include "D_Object.hpp"
 #endif
 
+#ifndef SHADE
+#define SHADE
+#include "Shader.hpp"
+#endif
+
 #include <stdio.h>
 #include <string.h>
 #include <string>

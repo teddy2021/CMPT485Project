@@ -24,6 +24,16 @@
 #include <SOIL2.h>
 #endif
 
+#ifndef SHADE
+#define SHADE
+#include "Shader.hpp"
+#endif
+
+#ifndef DOBJ
+#define DOBJ
+#include "D_Object.hpp"
+#endif
+
 using namespace glm;
 using namespace std;
 using std::vector;

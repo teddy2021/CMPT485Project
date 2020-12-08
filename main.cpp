@@ -12,14 +12,20 @@
 #include "convenience.hpp"
 #endif
 
-#ifndef OGLHPP
-#define OGLHPP
-#include "ogl.hpp"
+#ifndef SHADE
+#define SHADE
+#include "Shader.hpp"
+#endif
+
+#ifndef DOBJ
+#define DOBJ
+#include "D_Object.hpp"
 #endif
 
 #ifndef HEADER_SIMPLE_OPENGL_IMAGE_LIBRARY
 #include <SOIL2.h>
 #endif
+
 
 using namespace std;
 using namespace glm;
@@ -35,6 +41,8 @@ double verticalAngle = 0;
 
 float width = 1024, height = 768;
 
+GLuint VBO;
+
 int main(){
 
 	direction = {
@@ -49,7 +57,7 @@ int main(){
 		cos(horizontalAngle - 3.14f/2.0f)
 	};
 
-
+	
 
 	printf("Hello!\n");
 	PhysicsCommon common;
@@ -60,7 +68,8 @@ int main(){
 	const decimal timestep = 1.0f/60.0f;
 	
 
-	
+	vector<Shader> shaders;
+	vector<D_Object> objects;
 
 	GLFWwindow * window = setup();
 
