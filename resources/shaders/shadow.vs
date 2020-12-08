@@ -15,11 +15,12 @@ out vec4 shadowCoord;
 uniform mat4 MVP;
 uniform mat4 View;
 uniform mat4 Model;
-uniform vec3 w_lightInvDir;
+uniform vec3 w_lightPosition;
 uniform mat4 depthBiasMVP;
 
 void main(){
 
+		vec3 w_lightInvDir = w_lightPosition - m_vertPosition;
 		gl_Position = MVP * vec4(m_vertPosition, 1);
 
 		shadowCoord = depthBiasMVP * vec4(m_vertPosition, 1.0);

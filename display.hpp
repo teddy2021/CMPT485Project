@@ -29,7 +29,7 @@ void setUniform(GLuint uni, GLenum typ, GLchar* nm);
 
 void setUniforms(int program);
 
-void display();
+void display(GLFWwindow * window);
 
 void AssociateShader(int shader_idx, int object_idx);
 
@@ -47,4 +47,12 @@ int add_display_object(Display_Object obj);
 int add_object_path(const char* obj_path);
 
 int add_object_buffer(Mesh mesh, GLuint texture);
+
+int AssociateCustomVariable(GLchar name, void* var, int size);
+
+void AssociateVariable(GLchar* name);
+
+void AssociateVariable(GLchar * name, GLenum type);
+
+void SetLightPosition(vec3 position);
 

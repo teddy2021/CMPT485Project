@@ -79,10 +79,11 @@ void main(){
 
 		
 	
-		color = (
+		color = /**(
 		matAmbColor + 		
 		visibility * matDifColor * light * cosTheta +
 		visibility * matSpecColor * light * pow(cosAlpha, 5)
-		);
+		);**/
+			vec3(1,1,1);
 
 }

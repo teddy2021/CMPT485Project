@@ -10,3 +10,5 @@ mat4 get_Pmatrix();
 mat4 gen_MVPmatrix(GLFWwindow * window);
 void mouse_move(GLFWwindow* window, double xpos, double ypos);
 GLFWwindow * setup();
+void setupMainLoop();
+void display(GLFWwindow * window);

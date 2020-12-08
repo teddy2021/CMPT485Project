@@ -32,25 +32,42 @@ using namespace glm;
 
 
 // Globals
-float FOV = 30;
 
-
+extern float FOV;
 extern float width;
 extern float height;
 
 
 double mouse_x, mouse_y;
-double horizontalAngle = 3.14;
-double verticalAngle = 0;
+extern double horizontalAngle;
+extern double verticalAngle;
 
 float mouseSpeed = 0.00025f;
 float speed = 3.0f;
 
-vec3 position = {20, 0, 20};
-vec3 direction;
-vec3 v_right;
+extern vec3 position;
+extern vec3 direction;
+extern vec3 v_right;
 
 quat g_rotation;
+
+
+	
+
+double cur_time, lastTime;
+
+static vec3 pos1 = vec3(-1.5f, 0.0f, 0.0f);
+static vec3 pos2 = vec3(1.5f, 0.0f, 0.0f);
+
+GLuint vert_buffer_ID, d_MVP, Texture, norm_buffer, uv_buffer, v_buffer,
+	   index_buffer, shadowMapID, depthTexture, texID, 
+	   lightInvDirID, depthBiasID, viewID, modelID, MVPID, shadowProgram, 
+	   depthProgram, FrameBuffer;
+
+char text[1024];
+int frames;
+
+vector<unsigned short int>indices;
 
 // matrics and input handling
 mat4 get_Vmatrix(){
@@ -143,11 +160,70 @@ void mouse_move(GLFWwindow* window, double xpos, double ypos){
 }
 
 void main_loop(GLFWwindow * window){
+	do{
+
+	}
+
+	while( glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS && 
+			glfwWindowShouldClose(window) == 0 );
 
 
-	static vec3 pos1 = vec3(-1.5f, 0.0f, 0.0f);
-	static vec3 pos2 = vec3(1.5f, 0.0f, 0.0f);
+	glDeleteBuffers(1, &v_buffer);
+	glDeleteBuffers(1, &uv_buffer);
+	glDeleteBuffers(1, &norm_buffer);
+	glDeleteBuffers(1, &index_buffer);
 
+	glDeleteVertexArrays(1, &vert_buffer_ID);
+
+	glfwTerminate();
+}
+
+GLFWwindow * setup(){
+
+	if(!glfwInit()){
+		fprintf( stderr, "Failed to initialize GLFW\n" );
+		return (GLFWwindow *)-1;
+	}
+
+	// Set values for opengl
+	glfwWindowHint(GLFW_SAMPLES, 4);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
+	// Create new window
+	GLFWwindow * window;
+	window = glfwCreateWindow(width, height, "test", NULL, NULL);
+	if(NULL == window){
+		fprintf(stderr, "Failed to open GLFW window. If you have an Intel GPU, they are not 3.3 compatible. Try the 2.1 version of the tutorials.\n" );
+		glfwTerminate();
+		return (GLFWwindow *)-1;
+	}
+	glfwMakeContextCurrent(window);
+
+	glewExperimental = true;
+	if(glewInit() != GLEW_OK){
+		fprintf(stderr, "Failed to init GLEW\n");
+		return (GLFWwindow *)-1;
+	}
+
+	glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
+	glClearColor(0, 0, 0.4f, 0);
+
+	glEnable(GL_DEPTH_TEST);
+	glDepthFunc(GL_LESS);
+	
+
+	glEnable(GL_CULL_FACE);
+
+	return window;
+
+}
+
+void setupMainLoop(){
 	// Buffer for storing object
 	GLuint vert_buffer_ID;
 	glGenVertexArrays(1, &vert_buffer_ID);
@@ -174,42 +250,42 @@ void main_loop(GLFWwindow * window){
 		fprintf(stderr, "Failed to load object\n");
 	}
 
-	vector<unsigned short> indices;
+	indices;
 	vector<vec3> i_verts, i_norms;
 	vector<vec2> i_uvs;
 	indexVBO_slow(verts, uvs, normals, indices, i_verts, i_uvs, i_norms);
 
 	// create and fill buffers
-	GLuint v_buffer;
+
 	glGenBuffers(1, &v_buffer);
 	glBindBuffer(GL_ARRAY_BUFFER, v_buffer);
 	glBufferData(GL_ARRAY_BUFFER, i_verts.size() * sizeof(vec3), 
 			&i_verts[0], GL_STATIC_DRAW);
 
-	GLuint uv_buffer;
+
 	glGenBuffers(1, &uv_buffer);
 	glBindBuffer(GL_ARRAY_BUFFER, uv_buffer);
 	glBufferData(GL_ARRAY_BUFFER, i_uvs.size() * sizeof(vec2), 
 			&i_uvs[0], GL_STATIC_DRAW);
 
-	GLuint norm_buffer;
+
 	glGenBuffers(1, &norm_buffer);
 	glBindBuffer(GL_ARRAY_BUFFER, norm_buffer);
 	glBufferData(GL_ARRAY_BUFFER, i_norms.size() * sizeof(vec3), 
 			&i_norms[0], GL_STATIC_DRAW);
 
-	GLuint index_buffer;
+	
 	glGenBuffers(1, &index_buffer);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned short),
 			&indices[0], GL_STATIC_DRAW);
 
 	// render to texture
-	GLuint FrameBuffer = 0;
+	FrameBuffer = 0;
 	glGenFramebuffers(1, &FrameBuffer);
 	glBindFramebuffer(GL_FRAMEBUFFER, FrameBuffer);
 
-	GLuint depthTexture;
+	depthTexture;
 	glGenTextures(1, &depthTexture);
 	glBindTexture(GL_TEXTURE_2D, depthTexture);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT16, 1024, 1024, 0, 
@@ -267,7 +343,10 @@ void main_loop(GLFWwindow * window){
 	initText2D("Font/cells.png");
 	char text[256] = {0};
 //	int amount;
-	do{
+
+}
+
+void display(GLFWwindow * window){
 		// Load text for screen output
 		double cur_time = glfwGetTime();
 		float deltaTime = (float)(cur_time - lastTime);
@@ -421,65 +500,5 @@ void main_loop(GLFWwindow * window){
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
-	}
-
-	while( glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS && 
-			glfwWindowShouldClose(window) == 0 );
-
-
-	glDeleteBuffers(1, &v_buffer);
-	glDeleteBuffers(1, &uv_buffer);
-	glDeleteBuffers(1, &norm_buffer);
-	glDeleteBuffers(1, &index_buffer);
-
-	glDeleteVertexArrays(1, &vert_buffer_ID);
-
-	glfwTerminate();
 }
-
-GLFWwindow * setup(){
-
-	if(!glfwInit()){
-		fprintf( stderr, "Failed to initialize GLFW\n" );
-		return (GLFWwindow *)-1;
-	}
-
-	// Set values for opengl
-	glfwWindowHint(GLFW_SAMPLES, 4);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
-	// Create new window
-	GLFWwindow * window;
-	window = glfwCreateWindow(width, height, "test", NULL, NULL);
-	if(NULL == window){
-		fprintf(stderr, "Failed to open GLFW window. If you have an Intel GPU, they are not 3.3 compatible. Try the 2.1 version of the tutorials.\n" );
-		glfwTerminate();
-		return (GLFWwindow *)-1;
-	}
-	glfwMakeContextCurrent(window);
-
-	glewExperimental = true;
-	if(glewInit() != GLEW_OK){
-		fprintf(stderr, "Failed to init GLEW\n");
-		return (GLFWwindow *)-1;
-	}
-
-	glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
-	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-
-	glClearColor(0, 0, 0.4f, 0);
-
-	glEnable(GL_DEPTH_TEST);
-	glDepthFunc(GL_LESS);
-	
-
-	glEnable(GL_CULL_FACE);
-
-	return window;
-
-}
-
 

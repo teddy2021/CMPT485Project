@@ -12,7 +12,10 @@
 #include "convenience.hpp"
 #endif
 
-#include "display.hpp"
+#ifndef OGLHPP
+#define OGLHPP
+#include "ogl.hpp"
+#endif
 
 #ifndef HEADER_SIMPLE_OPENGL_IMAGE_LIBRARY
 #include <SOIL2.h>
@@ -22,44 +25,50 @@ using namespace std;
 using namespace glm;
 using namespace reactphysics3d;
 
+float FOV = 30;
+vec3 position = {0, 20, 0};
+vec3 direction;
+vec3 v_right;
+
+double horizontalAngle = 3.14;
+double verticalAngle = 0;
+
+float width = 1024, height = 768;
+
 int main(){
+
+	direction = {
+		cos(verticalAngle) * sin(horizontalAngle),
+		sin(verticalAngle),
+		cos(verticalAngle) * cos(horizontalAngle)
+	};
+
+	v_right = {
+		sin(horizontalAngle - 3.14f/2.0f),
+		0.0f,
+		cos(horizontalAngle - 3.14f/2.0f)
+	};
+
+
+
 	printf("Hello!\n");
 	PhysicsCommon common;
 	PhysicsWorld* world = common.createPhysicsWorld();
 
 	Vector3 position(0, 50, 0);
-	Quaternion id = Quaternion::identity();
-	Transform transform(position, id);
-	RigidBody* body = world->createRigidBody(transform);
-
+	Quaternion id = Quaternion::identity();	
 	const decimal timestep = 1.0f/60.0f;
 	
 
-	for(int i = 0; i < 20; i +=1){
-		world->update(timestep);
+	
 
-		const Transform& transform = body->getTransform();
-		const Vector3& position = transform.getPosition();
+	GLFWwindow * window = setup();
 
-		printf("Position: (%f, %f, %f)\n",
-				position.x,
-				position.y,
-				position.z);
-
-	}
-
-	GLFWwindow * window = setup_display();
-
-	int object = add_object_path("heating_plant");
-	int shader = addShader("shadow");
-	AssociateShader(shader, object);
-
+	setupMainLoop();
 	do{
-		
-		display();
-		
-	}while( glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS &&
-		 glfwWindowShouldClose(window) == 0 );
+		display(window);
+	}while(glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS &&
+			glfwWindowShouldClose(window)==0);
 
 	glfwTerminate();
 	return 0;
