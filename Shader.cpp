@@ -8,14 +8,16 @@
 #include "convenience.cpp"
 #endif
 
+#include <string.h>
+#include <stdlib.h>
+using namespace std;
 
+Shader::Shader(const char* name) {
 
-Shader::Shader(const char* name){
-
-	num_shaders += 1;
 	string vs, fs;
-	vs = "resources/shaders/" + name + ".vs";
-	fs = "resources/shaders/" + name + ".fs";
+	std::string nm(name);
+	vs = "resources/shaders/" + nm + ".vs";
+	fs = "resources/shaders/" + nm + ".fs";
 	const char* vss = vs.c_str();
 	const char* fss = fs.c_str();
 
@@ -24,9 +26,10 @@ Shader::Shader(const char* name){
 	GLuint *program_uniforms = (GLuint*) malloc(sizeof(GLuint));
 	GLenum * types = (GLenum*)  malloc(0);
 	GLchar** names = (GLchar**)  malloc(0);
+
 }
 
-void Shader::GetUniformSet(int id){
+/**void Shader::GetUniformSet(int id){
 	GLint count = 0, size = 0;
 	GLenum type;
 	GLuint i;
@@ -36,57 +39,48 @@ void Shader::GetUniformSet(int id){
 	GLsizei length = 0;
 	glGetProgramiv(id, GL_ACTIVE_UNIFORMS, &count);
 
-	num_uniforms = count;
-	uniforms = (Uniform *)malloc(sizeof(Uniform) * count);
-	
-	printf("[-1.%d] getting uniforms for shader %d\n", program, program);
+
+	int num_uniforms = count;
+
 	for(i = 0; i < count; i += 1){
 		printf("[%d.0] getting shader variable for shader %d and index %d\n", 
-				id, program,  i);
-		glGetActiveUniform(shaders[program], i, bufsize, 
+				i, id,  i);
+		glGetActiveUniform(id, i, bufsize, 
 				&length, &size, &type, name);
 		switch(type){
-			case GL_FLOAT_MAT4:
-				uniforms[i] = Umat4(name, i, type, new mat4(1));
-				breka;
-			case GL_FLOAT_VEC3:
-				uniforms[i] = UVec3(name, i, type, new vec3(1));
+			case GL_FLOAT_MAT4:{
+								   uniforms.emplace_back(make_unique<UMat4>());
+								   (*uniforms.back()).Init(name, i, type);
+								   break;
+							   }
+			case GL_FLOAT_VEC3:{
+								   uniforms.emplace_back(make_unique<UVec3>());
+								   (*uniforms.back()).Init(name, i, type);
 				break;
-			case GL_FLOAT:
-				uniforms[i] = Ufloat(name, i, type, 0.0);
+							   }
+			case GL_FLOAT:{
+							  uniforms.emplace_back(make_unique<Ufloat>());
+							  (*uniforms.back()).Init(name, i, type);
 				break;
+						  }
 			case GL_SAMPLER_2D:
 			case GL_SAMPLER_2D_SHADOW:
 			case GL_INT:
-				uniforms[i] = Uint(name, i, type, 0);
+						  uniforms.emplace_back(make_unique<Uint>());
+						  (*uniforms.back()).Init(name, i, type);
+
 				break;
 		}
 	}
 }
-
-UMat4::UMat4(GLchar * nm, GLuint idv, GLenum typ, mat4 val){
-	name = nm;
-	id = idv;
-	type = typ;
-	value = val;
+**/
+int Shader::GetUniformCount(){
+	return num_uniforms;
 }
 
-void UMat4::Update(){
-	string nm(name);
-	if(nm.compare("Projection") == 0){
-		value = get_Pmatrix();
-	}
-	else if(nm.compare("View") == 0){
-		value = get_Vmatrix();
-	}
-	else if(nm.compare("MV") == 0){
-		value = gen_MVmatrix();
-	}
-	else if(nm.compare("MVP") == 0){
-		value = gen_MVPmatrix();
+/**void Shader::BindUniforms(){
+	for(unique_ptr<Uniform> u: uniforms){
+		(*u).Bind();
 	}
 }
-
-Bind(){
-	glUniformMatrix4fv(id, 1, GL_FALSE, &value[0][0]);
-}
+**/

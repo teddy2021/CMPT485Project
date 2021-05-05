@@ -31,6 +31,22 @@
 
 extern GLuint VBO;
 
-GLFWwindow * setup();
+class Display{
+	public:
+		Display(string title);
+		Display(string title, float width, float height);
+		void UpdateScreen();
+		GLFWwindow * GetWindow();
+	
+	protected:
 
-void display(GLFWwindow * window);
+	private:
+
+		void Setup();
+		mat4 v_matrix; // view matrix
+		mat4 p_matrix; // projection matrix
+		GLFWwindow * window;
+
+};
+
+

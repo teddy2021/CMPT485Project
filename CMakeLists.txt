@@ -11,9 +11,14 @@ set(CMAKE_C_FLAGS -ftest-coverage)
 set(CMAKE_EXE_LINKER_FLAGS -lgcov )
 set(CMAKE_EXE_LINKER_FLAGS --coverage)
 
-add_executable(main  D_Object.cpp Shader.cpp 
+add_executable(main 
+	D_Object.cpp D_Object.hpp 
+	Shader.cpp Shader.hpp
+	convenience.cpp convenience.hpp 
+   	ogl.cpp ogl.hpp
+	display.cpp display.hpp
 	main.cpp 
-	convenience.cpp ogl.cpp display.cpp )
+	)
 
 
 include_directories(/usr/local/include/reactphysics3d)

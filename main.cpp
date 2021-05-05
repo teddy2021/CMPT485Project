@@ -22,6 +22,11 @@
 #include "D_Object.hpp"
 #endif
 
+#ifndef DISP
+#define DISP
+#include "display.hpp"
+#endif
+
 #ifndef HEADER_SIMPLE_OPENGL_IMAGE_LIBRARY
 #include <SOIL2.h>
 #endif
@@ -71,8 +76,8 @@ int main(){
 	vector<Shader> shaders;
 	vector<D_Object> objects;
 
-	GLFWwindow * window = setup();
-
+	Display main_window("Test", width, height);
+	GLFWwindow * window = main_window.GetWindow();
 	setupMainLoop();
 	do{
 		display(window);

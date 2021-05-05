@@ -8,8 +8,6 @@ using namespace glm;
 using std::string;
 using std::vector;
 
-#ifndef DOBJ
-#define DOBJ
 struct Model {
     // model files
     string objFilename;
@@ -39,7 +37,6 @@ struct Mesh {
 	vector<vec2> uvs;
 	vector<unsigned short> indices;
 };
-
 
 class D_Object{
 		
@@ -78,4 +75,3 @@ class D_Object{
 		GLuint **buffers;
 
 };
-#endif

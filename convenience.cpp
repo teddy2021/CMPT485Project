@@ -1,9 +1,4 @@
 
-#ifndef CON
-#define CON
-#include "convenience.hpp"
-#endif
-
 #include <stdio.h>
 #include <string.h>
 #include <string>
@@ -37,7 +32,8 @@
 using namespace glm;
 using namespace std;
 using std::vector;
-
+#ifndef CON
+#define CON
 bool ReadFile(const char * file, string& out){
 	
 	ifstream f(file);
@@ -736,6 +732,24 @@ quat LookAt(vec3 direction, vec3 desiredUp){
 	return rot2 * rot1;
 }
 
+bool getNextLine(FILE* file, char* line) {
+    char word[128];
+    while( 1 ) {
+        
+        // grab line
+        fgets(line, 1024, file);
+        // grab first word in line
+        int res = sscanf(line, "%s", word);
+        if (res == EOF) {
+            return false; // EOF found
+        } else if ( strcmp( word, "#" ) == 0 ) {
+            // found comment, ignore and read next line
+            continue;
+		} else {
+            return true;
+        }
+    }
+}
 
 bool loadModels(const char* path, std::vector<Model>& out_models) {
 	printf("Loading MODELS file %s...\n", path);
@@ -799,21 +813,4 @@ bool loadModels(const char* path, std::vector<Model>& out_models) {
 	return true;
 }
 
-bool getNextLine(FILE* file, char* line) {
-    char word[128];
-    while( 1 ) {
-        
-        // grab line
-        fgets(line, 1024, file);
-        // grab first word in line
-        int res = sscanf(line, "%s", word);
-        if (res == EOF) {
-            return false; // EOF found
-        } else if ( strcmp( word, "#" ) == 0 ) {
-            // found comment, ignore and read next line
-            continue;
-		} else {
-            return true;
-        }
-    }
-}
+#endif
