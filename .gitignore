@@ -33,4 +33,8 @@
 
 # Directories
 build
+.cache
 
+# Misc Files
+compile_commands.json
+ideas.txt
