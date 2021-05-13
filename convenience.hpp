@@ -32,8 +32,6 @@ bool ReadFile(const char* file, string& out);
 
 GLuint loadBMP_custom(const char * imagepath);
 
-GLuint LoadShaders(const char* vert_shader, const char * frag_shader);
-
 bool loadOBJ( const char* path, 
 		vector<vec3> & out_verts, 
 		vector<vec2> & out_uvs, 
@@ -43,6 +41,7 @@ GLuint loadDDS(const char * path);
 
 bool is_near(float v1, float v2);
 
+// D_Object
 bool getSimilarVertexIndex( 
 	vec3 & in_vertex, 
 	vec2 & in_uv, 
@@ -54,6 +53,7 @@ bool getSimilarVertexIndex(
 );
 
 
+// D_Object
 void indexVBO_slow(
 	vector<vec3> & in_vertices,
 	vector<vec2> & in_uvs,
@@ -64,22 +64,22 @@ void indexVBO_slow(
 	vector<vec2> & out_uvs,
 	vector<vec3> & out_normals);
 
-
+// Text
 void initText2D(const char * texPath);
 
 void printText(const char * text, int x, int y, int size);
 
 void cleanupText2D();
 
-void compute_tangents(
+void compute_tangents( // Shader
 		vector<vec3> verts,
 		vector<vec2> uvs,
 		vector<vec3> norms,
 		vector<vec3> &tans,
 		vector<vec3> &bitans
-		);
+		); 
 
-void indexVBO_TBN(
+void indexVBO_TBN( // Shader
 	vector<vec3> & in_vertices,
 	vector<vec2> & in_uvs,
 	vector<vec3> & in_normals,
@@ -93,10 +93,13 @@ void indexVBO_TBN(
 	vector<vec3> & out_bitangents
 );
 
-quat RotationBetweenVectors(vec3 start, vec3 dest);
+// D_Object
+quat RotationBetweenVectors(vec3 start, vec3 dest); 
 quat RotateTowards(quat q1, quat q2, float maxAngle);
 quat LookAt(vec3 direction, vec3 desiredUp);
 
 bool loadModels(const char* path, std::vector<Model>& out_models);
 
 bool getNextLine(FILE* file, char* line);
+
+

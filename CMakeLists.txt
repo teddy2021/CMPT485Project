@@ -10,6 +10,7 @@ set(CMAKE_C_FLAGS -fprofile-arcs )
 set(CMAKE_C_FLAGS -ftest-coverage)
 set(CMAKE_EXE_LINKER_FLAGS -lgcov )
 set(CMAKE_EXE_LINKER_FLAGS --coverage)
+set( CMAKE_EXPORT_COMPILE_COMMANDS ON )
 
 add_executable(main 
 	D_Object.cpp D_Object.hpp 
