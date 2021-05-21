@@ -1,5 +1,6 @@
 #ifndef SHADE
 #define SHADE
+#include <type_traits>
 #endif
 
 #include <stdlib.h>
@@ -13,16 +14,17 @@
 #include <unordered_map>
 #include <memory>
 #include <vector>
+#include <functional>
 
 using namespace glm;
 using namespace std;
+
 
 class Uniform{
 	public:
 		Uniform();
 		Uniform(GLuint idv, GLenum typ);
 		virtual void Bind(int s_id);
-		virtual void Update();
 	private:
 		GLuint id; // Uniform ID
 		GLenum type;
@@ -54,7 +56,6 @@ class Uniform{
 			mat##n##_t();\
 			mat##n##_t(mat##n init);\
 			void Bind(int s_id);\
-\
 		private:\
 			unique_ptr<mat##n> data;\
 };
@@ -65,8 +66,8 @@ class Uniform{
 				vec##n##_t();\
 				vec##n##_t(vec##n init);\
 				void Bind(int s_id);\
-		private: \
-				 unique_ptr<vec##n> data;\
+		private:\
+				unique_ptr<vec##n> data;\
 	};
 
 namespace Uniforms{
@@ -88,7 +89,7 @@ class Shader{
 		 * 		the name depth is all that is needed and wanted)
 		 * Post-conditions: The shader 
 		 **/
-		Shader(const char* name);
+		Shader(string name ...);
 
 		/**
 		 * A method to obtain the number of uniforms present in the shader
