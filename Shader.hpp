@@ -24,7 +24,7 @@ class Uniform{
 	public:
 		Uniform();
 		Uniform(GLuint idv, GLenum typ);
-		virtual void Bind(int s_id);
+		virtual void Bind(int s_id) = 0;
 	private:
 		GLuint id; // Uniform ID
 		GLenum type;
@@ -131,5 +131,8 @@ class Shader{
 		void GetUniformSet();
 };
 
+GLuint LoadShaders(string args ...);
 
-
+void initTextD(const char * texPath);
+void printText(const char * text, int x, int y, int size);
+void cleanupText2D();

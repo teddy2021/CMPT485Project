@@ -20,6 +20,12 @@
 #ifndef HEADER_SIMPLE_OPENGL_IMAGE_LIBRARY
 #include <SOIL2.h>
 #endif
+
+#ifndef SHADE
+#define SHADE
+#include "Shader.hpp"
+#endif
+
 #include <algorithm>
 #include <unistd.h>
 
