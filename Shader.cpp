@@ -21,16 +21,20 @@
 #endif
 using namespace std;
 
-GLuint LoadShaders(string args ...){
+
+GLuint pLoadShaders(string args ...){
 	va_list shaders;
 	va_start(shaders, args);
 	vector<GLuint> shader_ids;
+
+	const char * str = va_arg(shaders, const char *);
 	string shader;
 
 	GLint res = GL_FALSE;
 	int loglen;
 
-	while((shader = string(va_arg(shaders, char*))) != ""){
+	while(str){
+		shader = string(str);
 		GLint shader_id = 0;
 		int idx = 0;
 		if(shader.find(".vs", idx) != string::npos){
@@ -87,6 +91,7 @@ GLuint LoadShaders(string args ...){
 			glGetShaderInfoLog(shader_id, loglen, NULL, &error[0]);
 			fprintf(stderr, "%s\n", &error[0]);
 		}
+		str = va_arg(shaders, const char *);
 	}
 
 
@@ -112,6 +117,10 @@ GLuint LoadShaders(string args ...){
 	}
 
 	return ProgramID;
+}
+
+GLuint LoadShaders(string args ...){
+	return pLoadShaders(args, NULL);
 }
 
 Uniform::Uniform(){

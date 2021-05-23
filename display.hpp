@@ -42,6 +42,7 @@ class Display{
 
 	private:
 
+		static bool context;
 		void Setup();
 		mat4 v_matrix; // view matrix
 		mat4 p_matrix; // projection matrix

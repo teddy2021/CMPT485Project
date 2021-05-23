@@ -38,7 +38,11 @@ using namespace glm;
 
 #ifndef DISP
 #define DISP
+
+bool Display::context = false;
+
 Display::Display(string title){
+	Setup();
 	v_matrix = mat4(1);
 	p_matrix = mat4(1);
 
@@ -69,6 +73,8 @@ Display::Display(string title){
 }
 
 Display::Display(string title, float width, float height){
+
+	Setup();
 	v_matrix = mat4(1);
 	p_matrix = mat4(1);
 
@@ -100,16 +106,19 @@ Display::Display(string title, float width, float height){
 
 void Display::Setup(){
 
-	if(!glfwInit()){
-		fprintf( stderr, "Failed to initialize GLFW\n" );
-	}
+	if(context == false){
+		if(!glfwInit()){
+			fprintf( stderr, "Failed to initialize GLFW\n" );
+		}
 
-	// Set values for opengl
-	glfwWindowHint(GLFW_SAMPLES, 4);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+		// Set values for opengl
+		glfwWindowHint(GLFW_SAMPLES, 4);
+		glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+		glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+		glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+		glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+		context = true;
+	}
 }
 
 GLFWwindow * Display::GetWindow(){

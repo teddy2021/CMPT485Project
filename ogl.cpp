@@ -236,7 +236,7 @@ void setupMainLoop(){
 	glBindVertexArray(vert_buffer_ID);
 
 	GLuint depthProgram = LoadShaders("resources/shaders/Depth.vs", 
-										"resoureces/shaders/Depth.fs");
+										"resources/shaders/Depth.fs");
 
 	GLuint d_MVP = glGetUniformLocation(depthProgram, "d_MVP");
 
