@@ -1,3 +1,4 @@
+
 #ifndef SHADE
 #define SHADE
 #include "Shader.hpp"
@@ -12,6 +13,8 @@
 #include <fstream>
 #include <sstream>
 #include <memory>
+
+#include <boost/variant.hpp>
 
 #include <GL/glew.h>
 #include <glm/glm.hpp>
@@ -123,85 +126,66 @@ GLuint LoadShaders(string args ...){
 	return pLoadShaders(args, NULL);
 }
 
-Uniform::Uniform(){
+template <class T>
+Uniform<T>::Uniform(){
 	id = 0;
-	type = GL_FLOAT;
+	data = (T*)malloc(sizeof(T));
 }
 
-Uniform::Uniform(GLuint idv, GLenum typ): id(idv), type(typ){}
+template <class T>
+Uniform<T>::Uniform(GLuint idv, string name){
+	id = glGetUniformLocation(idv, name.c_str());
+	data = (T*)malloc(sizeof(T));
+}
 
-void Uniform::BindMatrix(mat2 matrix){
+template <class T>
+void Uniform<T>::BindMatrix(mat2 matrix){
 	glUniformMatrix2fv(id, 1, GL_FALSE, &matrix[0][0]);
 }
 
-void Uniform::BindMatrix(mat3 matrix){
+template<class T>
+void Uniform<T>::BindMatrix(mat3 matrix){
 	glUniformMatrix3fv(id, 1, GL_FALSE, &matrix[0][0]);
 }
 
-void Uniform::BindMatrix(mat4 matrix){
+template<class T>
+void Uniform<T>::BindMatrix(mat4 matrix){
 	glUniformMatrix4fv(id, 1, GL_FALSE, &matrix[0][0]);
 }
 
-void Uniform::BindVector(vec2 vec){
+template<class T>
+void Uniform<T>::BindVector(vec2 vec){
 	glUniform2fv(id, 1, &vec[0]);
 }
 
-void Uniform::BindVector(vec3 vec){
+template<class T>
+void Uniform<T>::BindVector(vec3 vec){
 	glUniform3fv(id, 1, &vec[0]);
 }
 
-void Uniform::BindVector(vec4 vec){
+template<class T>
+void Uniform<T>::BindVector(vec4 vec){
 	glUniform4fv(id, 1, &vec[0]);
 }
 
-void Uniform::BindFloat(float val){
+template<class T>
+void Uniform<T>::BindFloat(float val){
 	glUniform1f(id, val);
 }
 
-void Uniform::BindFloat(float *val, int count){
+template<class T>
+void Uniform<T>::BindFloat(float *val, int count){
 	glUniform1fv(id, count, val);
 }
 
-void Uniform::BindInt(int val){
+template<class T>
+void Uniform<T>::BindInt(int val){
 	glUniform1i(id, val);
 }
 
-void Uniform::BindInt(int *val, int count){
+template<class T>
+void Uniform<T>::BindInt(int *val, int count){
 	glUniform1iv(id, count, val);
-}
-
-#define UMATCONST(n)\
-	mat##n##_t::mat##n##_t(){\
-	*data = mat##n(1);\
-	}\
-	mat##n##_t::mat##n##_t(mat##n init){\
-	*data = init;\
-	}
-
-#define UMATBIND(n)\
-	void mat##n##_t::Bind(int s_id){\
-		BindMatrix(*data);\
-	}
-
-#define UVECCONST(n)\
-	vec##n##_t::vec##n##_t(){\
-	*data = vec##n(1);\
-	}\
-	\
-	vec##n##_t::vec##n##_t(vec##n init){\
-	*data = init;\
-	}
-
-#define UVECBIND(n)\
-	void vec##n##_t::Bind(int s_id){\
-		BindVector(*data);\
-	}
-
-namespace Uniforms{
-	UMATCONST(4);
-	UMATBIND(4);
-	UVECCONST(3);
-	UVECBIND(3);
 }
 
 Shader::Shader(string name ...) {
@@ -229,16 +213,31 @@ void Shader::GetUniformSet(){
 				&length, &size, &type, name);
 
 		name_map.emplace(name, i);
-	
 		switch(type){
-			case GL_FLOAT_VEC3:{
-				uniforms.push_back(make_shared<Uniforms::vec3_t>());
-				break;
-			   }
 			case GL_FLOAT_MAT4:{
-				uniforms.push_back(make_shared<Uniforms::mat4_t>());
-				break;
-			   }
+					uniforms.emplace_back(
+							make_shared<Uniform<mat4>>(id, name)
+							);
+					break;
+			}
+			case GL_FLOAT_VEC3:{
+					uniforms.emplace_back(
+							make_shared<Uniform<vec3>>(id, name)
+							);
+					break;
+			}
+			case GL_FLOAT:{
+				   uniforms.emplace_back(
+						   make_shared<Uniform<float>>(id, name)
+						   );
+				   break;
+			}
+			case GL_INT:{
+					uniforms.emplace_back(
+							make_shared<Uniform<int>>(id, name)
+							);
+					break;
+			}
 		}
 	}
 }
@@ -247,10 +246,17 @@ int Shader::GetUniformCount(){
 	return num_uniforms;
 }
 
-shared_ptr<Uniform> Shader::GetUniform(GLchar * name){
-	return uniforms.at(name_map.at(name));
+shared_ptr<Uniform<
+			boost::variant<
+				mat4, vec3, int, float>
+				>
+			> Shader::GetUniform(string name){
+	return uniforms.at(name_map.at(name.c_str()));
 }
 
+GLuint Shader::GetID(){
+	return id;
+}
 
 
 GLuint text_texture;

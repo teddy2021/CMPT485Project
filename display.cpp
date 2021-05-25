@@ -124,5 +124,14 @@ void Display::Setup(){
 GLFWwindow * Display::GetWindow(){
 	return window;
 }
+
+mat4 Display::GetView(){
+	return v_matrix;
+}
+
+mat4 Display::GetProjection(){
+	return p_matrix;
+}
+
 #endif
 

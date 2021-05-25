@@ -169,4 +169,5 @@ void D_Object:: set_scale(vec3 factor){
 	scale_factor = factor;
 }
 
+
 #endif

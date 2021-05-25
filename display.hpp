@@ -37,6 +37,8 @@ class Display{
 		Display(string title, float width, float height);
 		void UpdateScreen();
 		GLFWwindow * GetWindow();
+		mat4 GetView();
+		mat4 GetProjection();
 	
 	protected:
 

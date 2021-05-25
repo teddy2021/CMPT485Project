@@ -62,15 +62,20 @@ class D_Object{
 		void set_rotation(float rot, vec3 rot_axis);
 
 		void set_scale(vec3 factor);
+
 	protected:
 
 
 	private:
+		
 		vec3 translation, rotation_axis, scale_factor;
 		float rotation;
+		
 		int shader_idx;
+		
 		Mesh *mesh;
 		GLuint texture;
+		
 		GLuint vbo, uvb, nb, ib;
 		GLuint **buffers;
 

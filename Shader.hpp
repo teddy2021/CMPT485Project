@@ -16,18 +16,22 @@
 #include <vector>
 #include <functional>
 
+#include<boost/variant.hpp>
+
 using namespace glm;
 using namespace std;
 
 
+template <class T>
 class Uniform{
 	public:
 		Uniform();
-		Uniform(GLuint idv, GLenum typ);
-		virtual void Bind(int s_id) = 0;
+		Uniform(GLuint idv, string name);
+		void Bind(int s_id);
+		void Update(void f(T));
 	private:
 		GLuint id; // Uniform ID
-		GLenum type;
+		T *data;
 
 	protected:
 		// Binding specific Uniform types
@@ -50,30 +54,7 @@ class Uniform{
 
 };
 
-#define UMAT(n)\
-	class mat##n##_t: public Uniform{\
-		public: \
-			mat##n##_t();\
-			mat##n##_t(mat##n init);\
-			void Bind(int s_id);\
-		private:\
-			unique_ptr<mat##n> data;\
-};
-
-#define UVEC(n)\
-	class vec##n##_t: public Uniform{\
-		public: \
-				vec##n##_t();\
-				vec##n##_t(vec##n init);\
-				void Bind(int s_id);\
-		private:\
-				unique_ptr<vec##n> data;\
-	};
-
-namespace Uniforms{
-	UMAT(4);
-	UVEC(3);
-}
+typedef Uniform<boost::variant<mat4,vec3,int,float>> uni;
 
 class Shader{
 	public:
@@ -110,12 +91,16 @@ class Shader{
 		 * id, type, and variable (to be used when updating and binding the 
 		 * uniform)
 		 **/
-		shared_ptr<Uniform> GetUniform(GLchar * name);
-		
+		shared_ptr<uni> GetUniform(string name);
+
+		/**
+		 * A getter for the id of the shader instance
+		 **/
+		GLuint GetID();
 	private:
 		GLuint id;
 		int num_uniforms;
-		vector<shared_ptr<Uniform>> uniforms;
+		vector<shared_ptr<uni>> uniforms;
 		unordered_map<string, int> name_map;
 
 		/**

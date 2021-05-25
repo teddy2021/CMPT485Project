@@ -31,6 +31,7 @@
 #include <SOIL2.h>
 #endif
 
+#include <boost/variant.hpp>
 
 using namespace std;
 using namespace glm;
@@ -47,6 +48,10 @@ double verticalAngle = 0;
 float width = 1024, height = 768;
 
 GLuint VBO;
+
+mat4 GenMVP(Display d, D_Object obj){
+	return d.GetProjection() * d.GetView() * obj.getModelMatrix();
+}
 
 int main(){
 
@@ -76,9 +81,26 @@ int main(){
 	vector<Shader> shaders;
 	vector<D_Object> objects;
 
+	// Create Window
 	Display main_window("Test", width, height);
 	GLFWwindow * window = main_window.GetWindow();
-	setupMainLoop();
+	
+	// Create Object and attatch shader to it
+	D_Object monkey("resources/suzanne.obj", "texture.bmp" );
+	Shader main_shader("shader.fs", "shader.vs");
+	monkey.setShaderIdx(main_shader.GetID());
+
+	// vertex uniforms
+	shared_ptr<uni> MVP = main_shader.GetUniform("MVP");
+	shared_ptr<uni> View = main_shader.GetUniform("View");
+	shared_ptr<uni> Model = main_shader.GetUniform("Model");
+	shared_ptr<uni> Light = main_shader.GetUniform("w_lightPosition");
+
+	// fragment uniforms
+	shared_ptr<uni> texSampler = main_shader.GetUniform("texSampler");
+	shared_ptr<uni> normSampler = main_shader.GetUniform("normTexSampler");
+
+
 	do{
 		display(window);
 	}while(glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS &&
