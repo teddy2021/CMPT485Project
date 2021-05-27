@@ -101,6 +101,7 @@ int main(){
 	shared_ptr<uni> normSampler = main_shader.GetUniform("normTexSampler");
 
 
+
 	do{
 		display(window);
 	}while(glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS &&

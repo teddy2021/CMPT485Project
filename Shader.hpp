@@ -27,8 +27,9 @@ class Uniform{
 	public:
 		Uniform();
 		Uniform(GLuint idv, string name);
-		void Bind(int s_id);
-		void Update(void f(T));
+		void Bind();
+		void Bind(function<void(T)> f);
+		void Update(function<void(T)> f);
 	private:
 		GLuint id; // Uniform ID
 		T *data;
@@ -37,20 +38,20 @@ class Uniform{
 		// Binding specific Uniform types
 		
 		// matrices
-		void BindMatrix(mat2 matrix);
-		void BindMatrix(mat3 matrix);
-		void BindMatrix(mat4 matrix);
+		void Bind(mat2 matrix);
+		void Bind(mat3 matrix);
+		void Bind(mat4 matrix);
 
 		// Vectors
-		void BindVector(vec2 vec);
-		void BindVector(vec3 vec);
-		void BindVector(vec4 vec);
+		void Bind(vec2 vec);
+		void Bind(vec3 vec);
+		void Bind(vec4 vec);
 
 		// Atomic types
-		void BindFloat(float val);
-		void BindFloat(float* val, int count);
-		void BindInt(int val);
-		void BindInt(int * val, int count);
+		void Bind(float val);
+		void Bind(float* val, int count);
+		void Bind(int val);
+		void Bind(int * val, int count);
 
 };
 

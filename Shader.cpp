@@ -139,54 +139,71 @@ Uniform<T>::Uniform(GLuint idv, string name){
 }
 
 template <class T>
-void Uniform<T>::BindMatrix(mat2 matrix){
+void Uniform<T>::Bind(){
+	Bind(*data);
+}
+
+template <class T>
+void Uniform<T>::Bind(function<void(T)> f){
+	f(*data);
+}
+
+template <class T>
+void Uniform<T>::Bind(mat2 matrix){
 	glUniformMatrix2fv(id, 1, GL_FALSE, &matrix[0][0]);
 }
 
 template<class T>
-void Uniform<T>::BindMatrix(mat3 matrix){
+void Uniform<T>::Bind(mat3 matrix){
 	glUniformMatrix3fv(id, 1, GL_FALSE, &matrix[0][0]);
 }
 
 template<class T>
-void Uniform<T>::BindMatrix(mat4 matrix){
+void Uniform<T>::Bind(mat4 matrix){
 	glUniformMatrix4fv(id, 1, GL_FALSE, &matrix[0][0]);
 }
 
 template<class T>
-void Uniform<T>::BindVector(vec2 vec){
+void Uniform<T>::Bind(vec2 vec){
 	glUniform2fv(id, 1, &vec[0]);
 }
 
 template<class T>
-void Uniform<T>::BindVector(vec3 vec){
+void Uniform<T>::Bind(vec3 vec){
 	glUniform3fv(id, 1, &vec[0]);
 }
 
 template<class T>
-void Uniform<T>::BindVector(vec4 vec){
+void Uniform<T>::Bind(vec4 vec){
 	glUniform4fv(id, 1, &vec[0]);
 }
 
 template<class T>
-void Uniform<T>::BindFloat(float val){
+void Uniform<T>::Bind(float val){
 	glUniform1f(id, val);
 }
 
 template<class T>
-void Uniform<T>::BindFloat(float *val, int count){
+void Uniform<T>::Bind(float *val, int count){
 	glUniform1fv(id, count, val);
 }
 
 template<class T>
-void Uniform<T>::BindInt(int val){
+void Uniform<T>::Bind(int val){
 	glUniform1i(id, val);
 }
 
 template<class T>
-void Uniform<T>::BindInt(int *val, int count){
+void Uniform<T>::Bind(int *val, int count){
 	glUniform1iv(id, count, val);
 }
+
+template<class T>
+void Uniform<T>::Update(function<void (T)>f){
+	f(*data);
+}
+
+
 
 Shader::Shader(string name ...) {
 	id = LoadShaders(name);
